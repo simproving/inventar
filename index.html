@@ -270,6 +270,50 @@
             border: none;
             box-shadow: none;
         }
+
+        .total-quantity {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .location-quantities-list {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .location-quantity-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background-color: #f5f5f5;
+            padding: 3px 6px;
+            border-radius: 4px;
+            margin-bottom: 4px;
+        }
+
+        .location-quantity-item.current {
+            background-color: #e0f7fa;
+            border-left: 3px solid #0288d1;
+        }
+
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .quantity-value {
+            min-width: 20px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .quantity-value:hover {
+            background-color: #e0e0e0;
+            border-radius: 2px;
+        }
     </style>
 </head>
 <body>
@@ -314,255 +358,556 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/idb@8/build/umd.js"></script>
     <script>
-        let inventory = JSON.parse(localStorage.getItem('inventory')) || [];
-        let history = JSON.parse(localStorage.getItem('history')) || [];
-        let locations = JSON.parse(localStorage.getItem('locations')) || ['1'];
-        let locationNames = JSON.parse(localStorage.getItem('locationNames')) || { '1': 'Location 1' };
-        let currentLocation = '1';
+        let products = [];
+        let inventoryItems = [];
+        let locations = [];
+        let transactions = [];
+        let currentLocation = '';
+        let db;
 
-        function saveToLocalStorage() {
-            localStorage.setItem('inventory', JSON.stringify(inventory));
-            localStorage.setItem('history', JSON.stringify(history));
-            localStorage.setItem('locations', JSON.stringify(locations));
-            localStorage.setItem('locationNames', JSON.stringify(locationNames));
+        const initDB = async () => {
+            try {
+                db = await idb.openDB('inventoryDB', 2, {
+                    upgrade(db, oldVersion, newVersion, transaction) {
+                        console.log('Creating database schema version 2');
+                        
+                        // Create object stores matching the schema in README
+                        if (!db.objectStoreNames.contains('products')) {
+                            const productStore = db.createObjectStore('products', { keyPath: 'id' });
+                            productStore.createIndex('name', 'name', { unique: false });
+                        }
+                        
+                        if (!db.objectStoreNames.contains('locations')) {
+                            const locationStore = db.createObjectStore('locations', { keyPath: 'id' });
+                            locationStore.createIndex('name', 'name', { unique: false });
+                        }
+                        
+                        if (!db.objectStoreNames.contains('inventory')) {
+                            const inventoryStore = db.createObjectStore('inventory', { keyPath: 'id', autoIncrement: false });
+                            inventoryStore.createIndex('productId', 'productId', { unique: false });
+                            inventoryStore.createIndex('locationId', 'locationId', { unique: false });
+                            inventoryStore.createIndex('product_location', ['productId', 'locationId'], { unique: true });
+                        }
+                        
+                        if (!db.objectStoreNames.contains('transactions')) {
+                            db.createObjectStore('transactions', { keyPath: 'timestamp' });
+                        }
+                    }
+                });
+                
+                console.log('IndexedDB initialized with idb module');
+                return db;
+            } catch (error) {
+                console.error('Error initializing database:', error);
+                throw error;
+            }
+        };
+
+        const saveToIndexedDB = async (storeName, data) => {
+            try {
+                
+                await db.clear(storeName);
+                
+                for (const item of data) {
+                    await db.add(storeName, item);
+                }
+                
+                console.log(`Data saved to ${storeName} successfully`);
+            } catch (error) {
+                console.error(`Error saving data to ${storeName}:`, error);
+                throw error;
+            }
+        };
+
+        const loadFromIndexedDB = async (storeName) => {
+            try {
+                const data = await db.getAll(storeName);
+                return data;
+            } catch (error) {
+                console.error(`Error loading data from ${storeName}:`, error);
+                throw error;
+            }
+        };
+
+        const loadData = async () => {
+            try {
+                products = await loadFromIndexedDB('products') || [];
+                locations = await loadFromIndexedDB('locations') || [];
+                inventoryItems = await loadFromIndexedDB('inventory') || [];
+                transactions = await loadFromIndexedDB('transactions') || [];
+                
+                // Set default location if empty
+                if (locations.length === 0) {
+                    locations = [{ id: '1', name: 'Location 1' }];
+                    await saveToIndexedDB('locations', locations);
+                }
+                
+                // Add example product if no products exist
+                if (products.length === 0) {
+                    // Create example product
+                    const exampleProduct = {
+                        id: 'example-1',
+                        name: 'Example Product',
+                        price: 9.99,
+                        comments: 'This is an example product to help you get started.'
+                    };
+                    products.push(exampleProduct);
+                    
+                    // Add to inventory at default location
+                    const exampleInventory = {
+                        id: 'inv-example-1',
+                        productId: exampleProduct.id,
+                        locationId: locations[0].id,
+                        quantity: 5
+                    };
+                    inventoryItems.push(exampleInventory);
+                    
+                    // Create initial transaction
+                    const initialTransaction = {
+                        type: 'add_inventory',
+                        productId: exampleProduct.id,
+                        productName: exampleProduct.name,
+                        locationId: locations[0].id,
+                        quantity: 5,
+                        timestamp: new Date().toISOString()
+                    };
+                    transactions.push(initialTransaction);
+                    
+                    // Save the example data
+                    await saveToIndexedDB('products', products);
+                    await saveToIndexedDB('inventory', inventoryItems);
+                    await saveToIndexedDB('transactions', transactions);
+                    
+                    console.log('Added example product to database');
+                }
+                
+                // Set current location
+                currentLocation = locations[0]?.id || '1';
+                
+                console.log('Data loaded:', {
+                    products: products.length,
+                    locations: locations.length,
+                    inventory: inventoryItems.length,
+                    transactions: transactions.length
+                });
+            } catch (error) {
+                console.error('Error loading data:', error);
+                // Set defaults
+                products = [];
+                locations = [{ id: '1', name: 'Location 1' }];
+                inventoryItems = [];
+                transactions = [];
+                currentLocation = '1';
+            }
+        };
+
+        // Initialize database and load data
+        const initializeData = async () => {
+            try {
+                await initDB();
+                console.log('IndexedDB initialized');
+                await loadData();
+                
+                // Update UI
+                updateLocationSelect();
+                updateTable();
+                updateHistory();
+            } catch (error) {
+                console.error('Error initializing database:', error);
+                alert('Error loading data. Using default values.');
+                
+                // Fallback to empty data
+                products = [];
+                locations = [{ id: '1', name: 'Location 1' }];
+                inventoryItems = [];
+                transactions = [];
+                currentLocation = '1';
+                
+                // Update UI with default data
+                updateLocationSelect();
+                updateTable();
+                updateHistory();
+            }
+        };
+
+            
+        async function save() {
+            try {
+                console.log('Saving data to IndexedDB:', {
+                    products: products.length,
+                    locations: locations.length,
+                    inventory: inventoryItems.length,
+                    transactions: transactions.length
+                });
+                
+                // Save one store at a time to better isolate errors
+                try {
+                    await saveToIndexedDB('products', products);
+                    console.log('Products saved successfully');
+                } catch (error) {
+                    console.error('Error saving products:', error);
+                    alert(`Error saving products data: ${error.message || 'Unknown error'}`);
+                    throw error;
+                }
+                
+                try {
+                    await saveToIndexedDB('locations', locations);
+                    console.log('Locations saved successfully');
+                } catch (error) {
+                    console.error('Error saving locations:', error);
+                    alert(`Error saving locations data: ${error.message || 'Unknown error'}`);
+                    throw error;
+                }
+                
+                try {
+                    await saveToIndexedDB('inventory', inventoryItems);
+                    console.log('Inventory saved successfully');
+                } catch (error) {
+                    console.error('Error saving inventory:', error);
+                    alert(`Error saving inventory data: ${error.message || 'Unknown error'}`);
+                    throw error;
+                }
+                
+                try {
+                    await saveToIndexedDB('transactions', transactions);
+                    console.log('Transactions saved successfully');
+                } catch (error) {
+                    console.error('Error saving transactions:', error);
+                    alert(`Error saving transactions data: ${error.message || 'Unknown error'}`);
+                    throw error;
+                }
+                
+                console.log('All data saved successfully');
+            } catch (error) {
+                console.error('Error in saveToLocalStorage:', error);
+                alert('Error saving data. Please check console for details.');
+            }
         }
 
         function updateLocationSelect() {
             const select = document.getElementById('locationSelect');
             select.innerHTML = locations.map(loc => 
-                `<option value="${loc}" ${loc === currentLocation ? 'selected' : ''}>${locationNames[loc]}</option>`
+                `<option value="${loc.id}" ${loc.id === currentLocation ? 'selected' : ''}>${loc.name}</option>`
             ).join('');
             
             // Update the location name input
-            document.getElementById('locationName').value = locationNames[currentLocation] || '';
+            const currentLoc = locations.find(loc => loc.id === currentLocation);
+            document.getElementById('locationName').value = currentLoc ? currentLoc.name : '';
         }
 
         function changeLocation() {
             currentLocation = document.getElementById('locationSelect').value;
-            document.getElementById('locationName').value = locationNames[currentLocation] || '';
+            const currentLoc = locations.find(loc => loc.id === currentLocation);
+            document.getElementById('locationName').value = currentLoc ? currentLoc.name : '';
             updateTable();
         }
 
-        function renameLocation() {
+        async function renameLocation() {
             const newName = document.getElementById('locationName').value.trim();
             if (!newName) {
                 alert('Location name cannot be empty');
-                document.getElementById('locationName').value = locationNames[currentLocation] || '';
+                const currentLoc = locations.find(loc => loc.id === currentLocation);
+                document.getElementById('locationName').value = currentLoc ? currentLoc.name : '';
                 return;
             }
 
-            const oldName = locationNames[currentLocation] || `Location ${currentLocation}`;
-            locationNames[currentLocation] = newName;
-            
-            addToHistory({
-                type: 'rename_location',
-                location: currentLocation,
-                oldName: oldName,
-                newName: newName,
-                timestamp: new Date().toISOString()
-            });
+            const locationIndex = locations.findIndex(loc => loc.id === currentLocation);
+            if (locationIndex !== -1) {
+                const oldName = locations[locationIndex].name;
+                locations[locationIndex].name = newName;
+                
+                await addToHistory({
+                    type: 'rename_location',
+                    locationId: currentLocation,
+                    oldName: oldName,
+                    newName: newName,
+                    timestamp: new Date().toISOString()
+                });
 
-            updateLocationSelect();
+                await save();
+                updateLocationSelect();
+            }
         }
 
-        function addLocation() {
-            const newLocation = String(locations.length + 1);
+        async function addLocation() {
+            const newLocationId = String(Date.now());
+            const newLocation = {
+                id: newLocationId,
+                name: `Location ${locations.length + 1}`
+            };
+            
             locations.push(newLocation);
-            locationNames[newLocation] = `Location ${newLocation}`;
-            currentLocation = newLocation;
-            saveToLocalStorage();
+            currentLocation = newLocationId;
+            
+            await addToHistory({
+                type: 'add_location',
+                location: newLocation,
+                timestamp: new Date().toISOString()
+            });
+            
+            await save();
             updateLocationSelect();
             updateTable();
         }
 
-        function deleteLocation() {
+        async function deleteLocation() {
             if (locations.length <= 1) {
                 alert('Cannot delete the last location');
                 return;
             }
-            if (confirm('Are you sure you want to delete this location? All items in this location will be deleted.')) {
-                const index = locations.indexOf(currentLocation);
-                locations.splice(index, 1);
-                delete locationNames[currentLocation];
-                inventory = inventory.filter(item => item.location !== currentLocation);
-                currentLocation = locations[0];
-                saveToLocalStorage();
+            
+            if (confirm('Are you sure you want to delete this location? All inventory items in this location will be deleted.')) {
+                // Remove inventory items for this location
+                inventoryItems = inventoryItems.filter(item => item.locationId !== currentLocation);
+                
+                // Remove the location
+                const locationIndex = locations.findIndex(loc => loc.id === currentLocation);
+                const deletedLocation = locations[locationIndex];
+                locations.splice(locationIndex, 1);
+                
+                // Update current location to first available
+                currentLocation = locations[0].id;
+                
+                await addToHistory({
+                    type: 'delete_location',
+                    location: deletedLocation,
+                    timestamp: new Date().toISOString()
+                });
+                
+                await save();
                 updateLocationSelect();
                 updateTable();
             }
         }
 
-        function addItem() {
-            const name = document.getElementById('itemName').value;
+        async function addItem() {
+            const name = document.getElementById('itemName').value.trim();
             const quantity = parseInt(document.getElementById('itemQuantity').value);
             const price = parseFloat(document.getElementById('itemPrice').value);
 
-            if (!name || isNaN(quantity) || isNaN(price)) {
+            if (!name || isNaN(quantity) || isNaN(price) || quantity < 0 || price < 0) {
                 alert('Please fill all fields with valid values');
                 return;
             }
 
-            const newItem = { 
-                id: Date.now(), 
-                name, 
-                quantity, 
-                price,
-                location: currentLocation
-            };
-            inventory.push(newItem);
-            addToHistory({
-                type: 'add',
-                item: newItem,
-                timestamp: new Date().toISOString()
-            });
+            // Create product if it doesn't exist
+            let product = products.find(p => p.name.toLowerCase() === name.toLowerCase());
+            
+            if (!product) {
+                product = { 
+                    id: Date.now().toString(),
+                    name,
+                    price,
+                    comments: '',
+                    aliases: []
+                };
+                products.push(product);
+            }
+            
+            // Check if inventory entry exists
+            let inventoryEntry = inventoryItems.find(item => 
+                item.productId === product.id && item.locationId === currentLocation
+            );
+            
+            if (inventoryEntry) {
+                // Update existing inventory
+                const oldQuantity = inventoryEntry.quantity;
+                inventoryEntry.quantity += quantity;
+                
+                await addToHistory({
+                    type: 'update_quantity',
+                    productId: product.id,
+                    productName: product.name,
+                    locationId: currentLocation,
+                    oldQuantity,
+                    newQuantity: inventoryEntry.quantity,
+                    timestamp: new Date().toISOString()
+                });
+            } else {
+                // Create new inventory entry
+                inventoryEntry = {
+                    id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                    productId: product.id,
+                    locationId: currentLocation,
+                    quantity
+                };
+                
+                inventoryItems.push(inventoryEntry);
+                
+                await addToHistory({
+                    type: 'add_inventory',
+                    productId: product.id,
+                    productName: product.name,
+                    locationId: currentLocation,
+                    quantity,
+                    timestamp: new Date().toISOString()
+                });
+            }
 
+            await save();
             updateTable();
             clearForm();
         }
 
-        function deleteItem(id) {
-            const item = inventory.find(item => item.id === id);
-            if (item) {
-                inventory = inventory.filter(item => item.id !== id);
-                addToHistory({
-                    type: 'delete',
-                    item: item,
+        async function deleteItem(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+            
+            if (confirm(`Are you sure you want to delete "${product.name}" from all locations?`)) {
+                // Get all inventory entries for this product
+                const affectedEntries = inventoryItems.filter(item => item.productId === productId);
+                
+                // Record each deletion in history
+                for (const entry of affectedEntries) {
+                    const locationName = locations.find(loc => loc.id === entry.locationId)?.name || 'Unknown';
+                    
+                    await addToHistory({
+                        type: 'delete_inventory',
+                        productId,
+                        productName: product.name,
+                        locationId: entry.locationId,
+                        locationName,
+                        quantity: entry.quantity,
+                        timestamp: new Date().toISOString()
+                    });
+                }
+                
+                // Remove all inventory entries for this product
+                inventoryItems = inventoryItems.filter(item => item.productId !== productId);
+                
+                // Remove the product completely
+                products = products.filter(p => p.id !== productId);
+                
+                await addToHistory({
+                    type: 'delete_product',
+                    productId,
+                    productName: product.name,
                     timestamp: new Date().toISOString()
                 });
+                
+                await save();
                 updateTable();
             }
         }
 
-        function updateTable() {
-            const tbody = document.getElementById('inventoryBody');
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            
-            tbody.innerHTML = '';
-            
-            // Group items by name to show quantities across locations
-            const groupedItems = {};
-            inventory.forEach(item => {
-                if (!groupedItems[item.name]) {
-                    groupedItems[item.name] = {
-                        id: item.id,
-                        name: item.name,
-                        price: item.price,
-                        quantities: {},
-                        location: item.location,
-                        aliases: item.aliases || [],
-                        comments: item.comments || ''
-                    };
-                }
-                groupedItems[item.name].quantities[item.location] = (groupedItems[item.name].quantities[item.location] || 0) + item.quantity;
-            });
-
-            // Convert grouped items to array and filter by search term
-            const filteredItems = Object.values(groupedItems).filter(item => {
-                const matchesName = item.name.toLowerCase().includes(searchTerm);
-                const matchesAlias = item.aliases.some(alias => alias.toLowerCase().includes(searchTerm));
-                return matchesName || matchesAlias;
-            });
-            
-            filteredItems.forEach(item => {
-                const tr = document.createElement('tr');
-                tr.className = 'item-row';
-                
-                const locationQuantities = locations.map(loc => {
-                    const quantity = item.quantities[loc] || 0;
-                    const isCurrent = loc === currentLocation;
-                    return quantity > 0 ? 
-                        `<span class="location-quantity ${isCurrent ? 'current' : ''}">Loc ${loc}: ${quantity}</span>` : 
-                        '';
-                }).filter(Boolean).join('');
-
-                const detailsHtml = `
-                    <div class="item-details" id="details-${item.id}">
-                        <div class="item-details-grid">
-                            <div class="item-details-section">
-                                <label>Aliases (one per line):</label>
-                                <textarea id="aliases-${item.id}">${item.aliases.join('\n')}</textarea>
-                            </div>
-                            <div class="item-details-section">
-                                <label>Comments:</label>
-                                <textarea id="comments-${item.id}">${item.comments}</textarea>
-                            </div>
-                        </div>
-                        <div class="item-details-buttons">
-                            <button onclick="updateItemDetails(${item.id})">Update Details</button>
-                        </div>
-                    </div>
-                `;
-
-                tr.innerHTML = `
-                    <td>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span class="editable" onclick="editField(${item.id}, 'name', this)">${item.name}</span>
-                            <button class="toggle-details-btn" onclick="toggleDetails(${item.id})">▼</button>
-                        </div>
-                        <div class="location-quantities">${locationQuantities}</div>
-                    </td>
-                    <td>
-                        <button onclick="changeQuantity(${item.id}, -1)" class="quantity-btn">-</button>
-                        <span class="editable" onclick="editField(${item.id}, 'quantity', this)">${item.quantities[currentLocation] || 0}</span>
-                        <button onclick="changeQuantity(${item.id}, 1)" class="quantity-btn">+</button>
-                    </td>
-                    <td>
-                        <span class="editable" onclick="editField(${item.id}, 'price', this)">$${item.price.toFixed(2)}</span>
-                    </td>
-                    <td>
-                        <button onclick="deleteItem(${item.id})">Delete</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-
-                // Add details row
-                const detailsRow = document.createElement('tr');
-                detailsRow.className = 'item-details-row';
-                detailsRow.innerHTML = `
-                    <td colspan="4">
-                        ${detailsHtml}
-                    </td>
-                `;
-                tbody.appendChild(detailsRow);
-            });
-        }
-
-        function editField(id, field, element) {
-            const item = inventory.find(item => item.id === id);
-            if (!item) return;
+        async function editField(productId, field, element) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
 
             const currentValue = element.textContent;
             const input = document.createElement('input');
             input.type = field === 'price' ? 'number' : field === 'quantity' ? 'number' : 'text';
-            input.value = field === 'price' ? currentValue.replace('$', '') : currentValue;
+            input.step = field === 'price' ? '0.01' : '1';
+            input.min = field === 'quantity' || field === 'price' ? '0' : '';
+            input.value = currentValue;
             input.className = 'editable editing';
             
             element.textContent = '';
             element.appendChild(input);
             input.focus();
 
-            function saveEdit() {
+            async function saveEdit() {
                 const newValue = input.value;
-                if (newValue !== currentValue) {
-                    const oldValue = item[field];
-                    item[field] = field === 'price' ? parseFloat(newValue) : 
-                                 field === 'quantity' ? parseInt(newValue) : newValue;
-                    
-                    if (!isNaN(item[field])) {
-                        addToHistory({
-                            type: 'edit',
-                            item: { ...item },
-                            field: field,
-                            oldValue: oldValue,
+                if (newValue === currentValue) {
+                    element.textContent = currentValue;
+                    return;
+                }
+                
+                if (field === 'price') {
+                    const newPrice = parseFloat(newValue);
+                    if (!isNaN(newPrice) && newPrice >= 0) {
+                        const oldPrice = product.price;
+                        product.price = newPrice;
+                        
+                        await addToHistory({
+                            type: 'edit_product',
+                            productId: product.id,
+                            productName: product.name,
+                            field: 'price',
+                            oldValue: oldPrice,
+                            newValue: newPrice,
                             timestamp: new Date().toISOString()
                         });
+                        
+                        await save();
                         updateTable();
                     } else {
-                        item[field] = oldValue;
+                        element.textContent = currentValue;
+                        return;
+                    }
+                } else if (field === 'name') {
+                    const newName = newValue.trim();
+                    if (newName) {
+                        const oldName = product.name;
+                        product.name = newName;
+                        
+                        await addToHistory({
+                            type: 'edit_product',
+                            productId: product.id,
+                            productName: newName,
+                            field: 'name',
+                            oldValue: oldName,
+                            newValue: newName,
+                            timestamp: new Date().toISOString()
+                        });
+                        
+                        await save();
+                        updateTable();
+                    } else {
+                        element.textContent = currentValue;
+                        return;
+                    }
+                } else if (field === 'quantity') {
+                    const newQuantity = parseInt(newValue);
+                    if (!isNaN(newQuantity) && newQuantity >= 0) {
+                        // Find inventory entry for this product and location
+                        let inventoryEntry = inventoryItems.find(item => 
+                            item.productId === productId && item.locationId === currentLocation
+                        );
+                        
+                        if (inventoryEntry) {
+                            const oldQuantity = inventoryEntry.quantity;
+                            inventoryEntry.quantity = newQuantity;
+                            
+                            await addToHistory({
+                                type: 'update_quantity',
+                                productId: product.id,
+                                productName: product.name,
+                                locationId: currentLocation,
+                                oldQuantity,
+                                newQuantity,
+                                timestamp: new Date().toISOString()
+                            });
+                        } else if (newQuantity > 0) {
+                            // Create new inventory entry
+                            inventoryEntry = {
+                                id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                                productId: product.id,
+                                locationId: currentLocation,
+                                quantity: newQuantity
+                            };
+                            
+                            inventoryItems.push(inventoryEntry);
+                            
+                            await addToHistory({
+                                type: 'add_inventory',
+                                productId: product.id,
+                                productName: product.name,
+                                locationId: currentLocation,
+                                quantity: newQuantity,
+                                timestamp: new Date().toISOString()
+                            });
+                        }
+                        
+                        await save();
+                        updateTable();
+                    } else {
+                        element.textContent = currentValue;
+                        return;
                     }
                 }
-                element.textContent = field === 'price' ? `$${item[field].toFixed(2)}` : item[field];
             }
 
             input.addEventListener('blur', saveEdit);
@@ -586,47 +931,356 @@
             }
         }
 
-        function updateItemDetails(id) {
-            const item = inventory.find(item => item.id === id);
-            if (!item) return;
+        async function updateItemDetails(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
 
-            const aliasesText = document.getElementById(`aliases-${id}`).value;
+            const aliasesText = document.getElementById(`aliases-${productId}`).value;
             const newAliases = aliasesText.split('\n').filter(alias => alias.trim());
-            const newComments = document.getElementById(`comments-${id}`).value;
+            const newComments = document.getElementById(`comments-${productId}`).value;
 
-            if (JSON.stringify(item.aliases) !== JSON.stringify(newAliases) || item.comments !== newComments) {
-                const oldAliases = item.aliases || [];
-                const oldComments = item.comments || '';
+            if (JSON.stringify(product.aliases) !== JSON.stringify(newAliases) || product.comments !== newComments) {
+                const oldAliases = product.aliases || [];
+                const oldComments = product.comments || '';
                 
-                item.aliases = newAliases;
-                item.comments = newComments;
+                product.aliases = newAliases;
+                product.comments = newComments;
 
-                addToHistory({
-                    type: 'details',
-                    item: { ...item },
+                await addToHistory({
+                    type: 'update_details',
+                    productId: product.id,
+                    productName: product.name,
                     oldValue: { aliases: oldAliases, comments: oldComments },
+                    newValue: { aliases: newAliases, comments: newComments },
                     timestamp: new Date().toISOString()
                 });
+                
+                await save();
                 updateTable();
             }
         }
 
-        function changeQuantity(id, change) {
-            const item = inventory.find(item => item.id === id);
-            if (item) {
-                const newQuantity = item.quantity + change;
+        async function updateComments(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
+            const newComments = document.getElementById(`comments-${productId}`).value;
+            
+            if (product.comments !== newComments) {
+                const oldComments = product.comments || '';
+                product.comments = newComments;
+
+                await addToHistory({
+                    type: 'update_comments',
+                    productId: product.id,
+                    productName: product.name,
+                    oldValue: oldComments,
+                    newValue: newComments,
+                    timestamp: new Date().toISOString()
+                });
+                
+                await save();
+                updateTable();
+            }
+        }
+
+        async function changeQuantity(productId, change) {
+            const product = products.find(item => item.id === productId);
+            if (!product) return;
+            
+            // Find inventory entry for this product and location
+            let inventoryEntry = inventoryItems.find(item => 
+                item.productId === productId && item.locationId === currentLocation
+            );
+            
+            if (inventoryEntry) {
+                // Update existing entry
+                const oldQuantity = inventoryEntry.quantity;
+                const newQuantity = oldQuantity + change;
+                
                 if (newQuantity >= 0) {
-                    const oldQuantity = item.quantity;
-                    item.quantity = newQuantity;
-                    addToHistory({
-                        type: 'quantity',
-                        item: { ...item },
-                        oldQuantity: oldQuantity,
+                    inventoryEntry.quantity = newQuantity;
+                    
+                    await addToHistory({
+                        type: 'update_quantity',
+                        productId: product.id,
+                        productName: product.name,
+                        locationId: currentLocation,
+                        oldQuantity,
+                        newQuantity,
                         timestamp: new Date().toISOString()
                     });
+                    
+                    await save();
                     updateTable();
                 }
+            } else if (change > 0) {
+                // Create new inventory entry
+                inventoryEntry = {
+                    id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                    productId: product.id,
+                    locationId: currentLocation,
+                    quantity: change
+                };
+                
+                inventoryItems.push(inventoryEntry);
+                
+                await addToHistory({
+                    type: 'add_inventory',
+                    productId: product.id,
+                    productName: product.name,
+                    locationId: currentLocation,
+                    quantity: change,
+                    timestamp: new Date().toISOString()
+                });
+                
+                await save();
+                updateTable();
             }
+        }
+
+        // Function to change quantity for a specific location
+        async function changeSpecificLocationQuantity(productId, locationId, change) {
+            const product = products.find(item => item.id === productId);
+            if (!product) return;
+            
+            // Find inventory entry for this product and the specified location
+            let inventoryEntry = inventoryItems.find(item => 
+                item.productId === productId && item.locationId === locationId
+            );
+            
+            if (inventoryEntry) {
+                // Update existing entry
+                const oldQuantity = inventoryEntry.quantity;
+                const newQuantity = oldQuantity + change;
+                
+                if (newQuantity >= 0) {
+                    inventoryEntry.quantity = newQuantity;
+                    
+                    await addToHistory({
+                        type: 'update_quantity',
+                        productId: product.id,
+                        productName: product.name,
+                        locationId: locationId,
+                        oldQuantity,
+                        newQuantity,
+                        timestamp: new Date().toISOString()
+                    });
+                    
+                    await save();
+                    updateTable();
+                }
+            } else if (change > 0) {
+                // Create new inventory entry
+                inventoryEntry = {
+                    id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                    productId: product.id,
+                    locationId: locationId,
+                    quantity: change
+                };
+                
+                inventoryItems.push(inventoryEntry);
+                
+                await addToHistory({
+                    type: 'add_inventory',
+                    productId: product.id,
+                    productName: product.name,
+                    locationId: locationId,
+                    quantity: change,
+                    timestamp: new Date().toISOString()
+                });
+                
+                await save();
+                updateTable();
+            }
+        }
+
+        // Allow direct editing of location quantity by clicking on the value
+        async function editLocationQuantity(productId, locationId, element) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
+            const currentValue = element.textContent;
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.step = '1';
+            input.min = '0';
+            input.value = currentValue;
+            input.className = 'quantity-value editing';
+            input.style.width = '40px';
+            
+            element.textContent = '';
+            element.appendChild(input);
+            input.focus();
+
+            async function saveEdit() {
+                const newValue = parseInt(input.value);
+                const oldValue = parseInt(currentValue);
+                
+                if (isNaN(newValue) || newValue === oldValue) {
+                    element.textContent = currentValue;
+                    return;
+                }
+                
+                if (newValue >= 0) {
+                    // Find inventory entry for this product and location
+                    let inventoryEntry = inventoryItems.find(item => 
+                        item.productId === productId && item.locationId === locationId
+                    );
+                    
+                    if (inventoryEntry) {
+                        inventoryEntry.quantity = newValue;
+                        
+                        await addToHistory({
+                            type: 'update_quantity',
+                            productId: product.id,
+                            productName: product.name,
+                            locationId: locationId,
+                            oldQuantity: oldValue,
+                            newQuantity: newValue,
+                            timestamp: new Date().toISOString()
+                        });
+                    } else if (newValue > 0) {
+                        // Create new inventory entry
+                        inventoryEntry = {
+                            id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                            productId: product.id,
+                            locationId: locationId,
+                            quantity: newValue
+                        };
+                        
+                        inventoryItems.push(inventoryEntry);
+                        
+                        await addToHistory({
+                            type: 'add_inventory',
+                            productId: product.id,
+                            productName: product.name,
+                            locationId: locationId,
+                            quantity: newValue,
+                            timestamp: new Date().toISOString()
+                        });
+                    }
+                    
+                    await save();
+                    updateTable();
+                } else {
+                    element.textContent = currentValue;
+                }
+            }
+
+            input.addEventListener('blur', saveEdit);
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    saveEdit();
+                    input.blur();
+                }
+            });
+        }
+
+        // Debounce function to limit how often a function can be called
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                const context = this;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), wait);
+            };
+        }
+        
+        // Store pending changes to show immediate visual feedback
+        const pendingQuantityChanges = {};
+        
+        // Apply visual update immediately without saving
+        function applyVisualQuantityChange(productId, locationId, change) {
+            const key = `${productId}-${locationId}`;
+            pendingQuantityChanges[key] = (pendingQuantityChanges[key] || 0) + change;
+            
+            // Find the quantity display element and update it
+            const quantityElement = document.querySelector(`[data-product-id="${productId}"][data-location-id="${locationId}"]`);
+            if (quantityElement) {
+                const currentQuantity = parseInt(quantityElement.textContent || '0');
+                const newQuantity = Math.max(0, currentQuantity + change);
+                quantityElement.textContent = newQuantity;
+            }
+            
+            // Update total if needed
+            const totalElement = document.querySelector(`[data-product-id="${productId}"][data-total="true"]`);
+            if (totalElement) {
+                const currentTotal = parseInt(totalElement.textContent.replace('Total: ', '') || '0');
+                const newTotal = Math.max(0, currentTotal + change);
+                totalElement.textContent = `Total: ${newTotal}`;
+            }
+        }
+
+        // Debounced function to actually save changes
+        const saveQuantityChange = debounce(async (productId, locationId, change) => {
+            const key = `${productId}-${locationId}`;
+            const totalChange = pendingQuantityChanges[key] || 0;
+            
+            // Reset pending changes
+            pendingQuantityChanges[key] = 0;
+            
+            if (totalChange === 0) return;
+            
+            const product = products.find(item => item.id === productId);
+            if (!product) return;
+            
+            // Find inventory entry for this product and the specified location
+            let inventoryEntry = inventoryItems.find(item => 
+                item.productId === productId && item.locationId === locationId
+            );
+            
+            if (inventoryEntry) {
+                // Update existing entry
+                const oldQuantity = inventoryEntry.quantity;
+                const newQuantity = Math.max(0, oldQuantity + totalChange);
+                
+                inventoryEntry.quantity = newQuantity;
+                
+                await addToHistory({
+                    type: 'update_quantity',
+                    productId: product.id,
+                    productName: product.name,
+                    locationId: locationId,
+                    oldQuantity,
+                    newQuantity,
+                    timestamp: new Date().toISOString()
+                });
+                
+                await save();
+                updateTable();
+            } else if (totalChange > 0) {
+                // Create new inventory entry
+                inventoryEntry = {
+                    id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                    productId: product.id,
+                    locationId: locationId,
+                    quantity: totalChange
+                };
+                
+                inventoryItems.push(inventoryEntry);
+                
+                await addToHistory({
+                    type: 'add_inventory',
+                    productId: product.id,
+                    productName: product.name,
+                    locationId: locationId,
+                    quantity: totalChange,
+                    timestamp: new Date().toISOString()
+                });
+                
+                await save();
+                updateTable();
+            }
+        }, 500); // 500ms debounce time
+        
+        // Function to change quantity with debounce
+        function changeSpecificLocationQuantityWithDebounce(productId, locationId, change) {
+            // Apply visual change immediately
+            applyVisualQuantityChange(productId, locationId, change);
+            
+            // Schedule the actual save after debounce
+            saveQuantityChange(productId, locationId, change);
         }
 
         function clearForm() {
@@ -649,73 +1303,207 @@
             const historyList = document.getElementById('historyList');
             historyList.innerHTML = '';
             
-            history.forEach((change, index) => {
+            if (!Array.isArray(transactions)) {
+                console.warn('Transactions is not an array:', transactions);
+                return;
+            }
+            
+            // Sort transactions by timestamp (newest first)
+            const sortedTransactions = [...transactions].sort((a, b) => 
+                new Date(b.timestamp) - new Date(a.timestamp)
+            );
+            
+            sortedTransactions.forEach((transaction, index) => {
                 const div = document.createElement('div');
                 div.className = 'history-item';
                 let changeText = '';
-                if (change.type === 'add') {
-                    changeText = `Added ${change.item.name} to ${locationNames[change.item.location]}`;
-                } else if (change.type === 'delete') {
-                    changeText = `Deleted ${change.item.name} from ${locationNames[change.item.location]}`;
-                } else if (change.type === 'quantity') {
-                    changeText = `Changed quantity of ${change.item.name} from ${change.oldQuantity} to ${change.item.quantity} in ${locationNames[change.item.location]}`;
-                } else if (change.type === 'edit') {
-                    changeText = `Changed ${change.field} of ${change.item.name} from ${change.oldValue} to ${change.item[change.field]} in ${locationNames[change.item.location]}`;
-                } else if (change.type === 'details') {
-                    changeText = `Updated details for ${change.item.name}`;
-                } else if (change.type === 'location') {
-                    changeText = `Moved ${change.item.name} from ${locationNames[change.oldValue]} to ${locationNames[change.item.location]}`;
-                } else if (change.type === 'rename_location') {
-                    changeText = `Renamed ${change.oldName} to ${change.newName}`;
+                
+                try {
+                    // Get location name if locationId exists
+                    const getLocationName = (locationId) => {
+                        const location = locations.find(loc => loc.id === locationId);
+                        return location ? location.name : 'Unknown Location';
+                    };
+                    
+                    switch (transaction.type) {
+                        case 'add_inventory':
+                            changeText = `Added ${transaction.quantity} ${transaction.productName} to ${getLocationName(transaction.locationId)}`;
+                            break;
+                        case 'delete_inventory':
+                            const locationDisplayName = transaction.locationName || getLocationName(transaction.locationId);
+                            changeText = `Deleted ${transaction.productName} from ${locationDisplayName}`;
+                            break;
+                        case 'delete_product':
+                            changeText = `Removed product ${transaction.productName} completely`;
+                            break;
+                        case 'update_quantity':
+                            changeText = `Changed quantity of ${transaction.productName} from ${transaction.oldQuantity} to ${transaction.newQuantity} in ${getLocationName(transaction.locationId)}`;
+                            break;
+                        case 'edit_product':
+                            changeText = `Changed ${transaction.field} of ${transaction.productName} from ${transaction.oldValue} to ${transaction.newValue}`;
+                            break;
+                        case 'update_details':
+                            changeText = `Updated details for ${transaction.productName}`;
+                            break;
+                        case 'add_location':
+                            changeText = `Added new location: ${transaction.location.name}`;
+                            break;
+                        case 'delete_location':
+                            changeText = `Deleted location: ${transaction.location.name}`;
+                            break;
+                        case 'rename_location':
+                            changeText = `Renamed ${transaction.oldName} to ${transaction.newName}`;
+                            break;
+                        case 'update_comments':
+                            changeText = `Updated comments for ${transaction.productName}`;
+                            break;
+                        default:
+                            changeText = `Unknown transaction type: ${transaction.type}`;
+                    }
+                } catch (error) {
+                    console.error('Error processing transaction entry:', error, transaction);
+                    changeText = 'Error: Invalid transaction entry';
                 }
+
                 div.innerHTML = `
-                    <span>${changeText} - ${formatDate(change.timestamp)}</span>
+                    <span>${changeText} - ${formatDate(transaction.timestamp)}</span>
                     <button onclick="revertChange(${index})">Revert</button>
                 `;
                 historyList.appendChild(div);
             });
         }
 
-        function revertChange(index) {
-            const change = history[index];
-            if (change.type === 'add') {
-                inventory = inventory.filter(item => item.id !== change.item.id);
-            } else if (change.type === 'delete') {
-                inventory.push(change.item);
-            } else if (change.type === 'quantity') {
-                const item = inventory.find(item => item.id === change.item.id);
-                if (item) {
-                    item.quantity = change.oldQuantity;
-                }
-            } else if (change.type === 'edit') {
-                const item = inventory.find(item => item.id === change.item.id);
-                if (item) {
-                    item[change.field] = change.oldValue;
-                }
-            } else if (change.type === 'details') {
-                const item = inventory.find(item => item.id === change.item.id);
-                if (item) {
-                    item.aliases = change.oldValue.aliases;
-                    item.comments = change.oldValue.comments;
-                }
-            } else if (change.type === 'location') {
-                const item = inventory.find(item => item.id === change.item.id);
-                if (item) {
-                    item.location = change.oldValue;
-                }
-            } else if (change.type === 'rename_location') {
-                locationNames[change.location] = change.oldName;
-            }
-            history.splice(index, 1);
-            saveToLocalStorage();
-            updateTable();
+        async function addToHistory(change) {
+            transactions.push(change);
+            await save();
             updateHistory();
         }
 
-        function addToHistory(change) {
-            history.push(change);
-            saveToLocalStorage();
-            updateHistory();
+        async function revertChange(index) {
+            const sortedTransactions = [...transactions].sort((a, b) => 
+                new Date(b.timestamp) - new Date(a.timestamp)
+            );
+            
+            const transaction = sortedTransactions[index];
+            if (!transaction) return;
+            
+            const actualIndex = transactions.findIndex(t => t.timestamp === transaction.timestamp);
+            if (actualIndex === -1) return;
+            
+            try {
+                switch (transaction.type) {
+                    case 'add_inventory':
+                        // Remove the inventory entry
+                        inventoryItems = inventoryItems.filter(item => 
+                            !(item.productId === transaction.productId && 
+                              item.locationId === transaction.locationId)
+                        );
+                        break;
+                        
+                    case 'delete_inventory':
+                        // Add the inventory entry back
+                        inventoryItems.push({
+                            id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                            productId: transaction.productId,
+                            locationId: transaction.locationId,
+                            quantity: transaction.quantity
+                        });
+                        break;
+                        
+                    case 'delete_product':
+                        // Check if product exists (might have been recreated)
+                        if (!products.some(p => p.id === transaction.productId)) {
+                            // We need more details than what's in the transaction
+                            // For simplicity, we'll just create a basic product
+                            products.push({
+                                id: transaction.productId,
+                                name: transaction.productName,
+                                price: 0, // Default price
+                                comments: '',
+                                aliases: []
+                            });
+                        }
+                        break;
+                        
+                    case 'update_quantity':
+                        // Find the inventory entry
+                        const quantityEntry = inventoryItems.find(item => 
+                            item.productId === transaction.productId && 
+                            item.locationId === transaction.locationId
+                        );
+                        
+                        if (quantityEntry) {
+                            quantityEntry.quantity = transaction.oldQuantity;
+                        } else if (transaction.oldQuantity > 0) {
+                            // Create new entry with old quantity
+                            inventoryItems.push({
+                                id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                                productId: transaction.productId,
+                                locationId: transaction.locationId,
+                                quantity: transaction.oldQuantity
+                            });
+                        }
+                        break;
+                        
+                    case 'edit_product':
+                        // Find the product
+                        const editProduct = products.find(p => p.id === transaction.productId);
+                        if (editProduct) {
+                            editProduct[transaction.field] = transaction.oldValue;
+                        }
+                        break;
+                        
+                    case 'update_details':
+                        // Find the product
+                        const detailsProduct = products.find(p => p.id === transaction.productId);
+                        if (detailsProduct) {
+                            detailsProduct.aliases = transaction.oldValue.aliases;
+                            detailsProduct.comments = transaction.oldValue.comments;
+                        }
+                        break;
+                        
+                    case 'update_comments':
+                        // Find the product
+                        const commentsProduct = products.find(p => p.id === transaction.productId);
+                        if (commentsProduct) {
+                            commentsProduct.comments = transaction.oldValue;
+                        }
+                        break;
+                        
+                    case 'add_location':
+                        // Remove the location
+                        locations = locations.filter(loc => loc.id !== transaction.location.id);
+                        
+                        // Remove any inventory for this location
+                        inventoryItems = inventoryItems.filter(item => 
+                            item.locationId !== transaction.location.id
+                        );
+                        break;
+                        
+                    case 'delete_location':
+                        // Add the location back
+                        locations.push(transaction.location);
+                        break;
+                        
+                    case 'rename_location':
+                        // Find the location and change the name back
+                        const renameLocation = locations.find(loc => loc.id === transaction.locationId);
+                        if (renameLocation) {
+                            renameLocation.name = transaction.oldName;
+                        }
+                        break;
+                }
+                
+                // Remove the transaction from history
+                transactions.splice(actualIndex, 1);
+                
+                await save();
+                updateTable();
+                updateHistory();
+            } catch (error) {
+                console.error('Error reverting transaction:', error);
+                alert('Error reverting transaction: ' + error.message);
+            }
         }
 
         document.getElementById('searchInput').addEventListener('input', updateTable);
@@ -724,6 +1512,143 @@
         updateLocationSelect();
         updateTable();
         updateHistory();
+
+        function updateTable() {
+            const tbody = document.getElementById('inventoryBody');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            tbody.innerHTML = '';
+            
+            // Get products with inventory in any location (for total quantities)
+            const productInventory = {};
+            
+            // Initialize with all products
+            products.forEach(product => {
+                productInventory[product.id] = {
+                    product,
+                    quantities: {},
+                    totalQuantity: 0
+                };
+            });
+            
+            // Add quantities from inventory
+            inventoryItems.forEach(item => {
+                if (productInventory[item.productId]) {
+                    productInventory[item.productId].quantities[item.locationId] = item.quantity;
+                    productInventory[item.productId].totalQuantity += item.quantity;
+                }
+            });
+            
+            // Filter by search term
+            const filteredProducts = Object.values(productInventory).filter(entry => {
+                const product = entry.product;
+                const matchesName = product.name.toLowerCase().includes(searchTerm);
+                const matchesAlias = Array.isArray(product.aliases) && 
+                                    product.aliases.some(alias => alias.toLowerCase().includes(searchTerm));
+                return matchesName || matchesAlias;
+            });
+            
+            // Sort by name
+            filteredProducts.sort((a, b) => a.product.name.localeCompare(b.product.name));
+            
+            // Display the products
+            filteredProducts.forEach(entry => {
+                const product = entry.product;
+                const currentLocationQuantity = entry.quantities[currentLocation] || 0;
+                
+                const tr = document.createElement('tr');
+                tr.className = 'item-row';
+                
+                const locationQuantities = locations.map(loc => {
+                    const quantity = entry.quantities[loc.id] || 0;
+                    const isCurrent = loc.id === currentLocation;
+                    return quantity > 0 ? 
+                        `<span class="location-quantity ${isCurrent ? 'current' : ''}">${loc.name}: ${quantity}</span>` : 
+                        '';
+                }).filter(Boolean).join('');
+
+                const detailsHtml = `
+                    <div class="item-details" id="details-${product.id}">
+                        <div class="item-details-grid">
+                            <div class="item-details-section">
+                                <label>Comments:</label>
+                                <textarea id="comments-${product.id}" onblur="updateComments('${product.id}')">${product.comments || ''}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                tr.innerHTML = `
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="editable" onclick="editField('${product.id}', 'name', this)">${product.name}</span>
+                            <button class="toggle-details-btn" onclick="toggleDetails('${product.id}')">▼</button>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="total-quantity">
+                            <strong data-product-id="${product.id}" data-total="true">Total: ${entry.totalQuantity}</strong>
+                        </div>
+                        <div class="location-quantities-list">
+                            ${locations.map(loc => {
+                                const locQuantity = entry.quantities[loc.id] || 0;
+                                const isCurrent = loc.id === currentLocation;
+                                return `
+                                <div class="location-quantity-item ${isCurrent ? 'current' : ''}">
+                                    <span class="location-name">${loc.name}:</span>
+                                    <div class="quantity-controls">
+                                        <button onclick="changeSpecificLocationQuantityWithDebounce('${product.id}', '${loc.id}', -1)" class="quantity-btn">-</button>
+                                        <span class="quantity-value" data-product-id="${product.id}" data-location-id="${loc.id}" onclick="editLocationQuantity('${product.id}', '${loc.id}', this)">${locQuantity}</span>
+                                        <button onclick="changeSpecificLocationQuantityWithDebounce('${product.id}', '${loc.id}', 1)" class="quantity-btn">+</button>
+                                    </div>
+                                </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="editable" onclick="editField('${product.id}', 'price', this)">${product.price.toFixed(2)}</span>
+                    </td>
+                    <td>
+                        <button onclick="deleteItem('${product.id}')">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+
+                // Add details row
+                const detailsRow = document.createElement('tr');
+                detailsRow.className = 'item-details-row';
+                detailsRow.innerHTML = `
+                    <td colspan="4">
+                        ${detailsHtml}
+                    </td>
+                `;
+                tbody.appendChild(detailsRow);
+            });
+        }
+
+        // Handle errors with IndexedDB
+        const handleDBError = (error) => {
+            console.error('IndexedDB error:', error.message);
+            alert(`Database error: ${error.message}. Some features may not work correctly.`);
+        };
+
+        // Add global event handler for IndexedDB errors
+        window.addEventListener('error', (event) => {
+            if (event.target && event.target.error && event.target.error.name && 
+                event.target.error.name.includes('IDB')) {
+                handleDBError(event.target.error);
+            }
+        });
+
+        // Initialize the app when DOM content is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize with error handling
+            initializeData().catch(error => {
+                console.error('Error during initialization:', error);
+                alert('Failed to initialize the application. Please refresh the page or check console for details.');
+            });
+        });
     </script>
 </body>
 </html> 
