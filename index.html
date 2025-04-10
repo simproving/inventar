@@ -5,6 +5,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inventory System</title>
     <style>
+        :root {
+            /* Light theme (default) */
+            --bg-color: #f5f5f5;
+            --container-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #dddddd;
+            --header-bg: #f8f8f8;
+            --highlight-bg: #f5f5f5;
+            --button-primary: #4CAF50;
+            --button-primary-hover: #45a049;
+            --button-secondary: #2196F3;
+            --button-secondary-hover: #1976D2;
+            --button-danger: #ff4444;
+            --button-danger-hover: #cc0000;
+            --location-quantity-bg: #e3f2fd;
+            --location-quantity-color: #1976D2;
+            --location-quantity-current-bg: #c8e6c9;
+            --location-quantity-current-color: #2e7d32;
+            --history-item-border: #eee;
+            --shadow-color: rgba(0,0,0,0.1);
+            --toggle-icon: '🌙';
+        }
+
+        [data-theme="dark"] {
+            /* Dark theme */
+            --bg-color: #121212;
+            --container-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --border-color: #444444;
+            --header-bg: #2a2a2a;
+            --highlight-bg: #333333;
+            --button-primary: #388E3C;
+            --button-primary-hover: #2E7D32;
+            --button-secondary: #1976D2;
+            --button-secondary-hover: #1565C0;
+            --button-danger: #d32f2f;
+            --button-danger-hover: #b71c1c;
+            --location-quantity-bg: #0d47a1;
+            --location-quantity-color: #e3f2fd;
+            --location-quantity-current-bg: #1b5e20;
+            --location-quantity-current-color: #c8e6c9;
+            --history-item-border: #444444;
+            --shadow-color: rgba(0,0,0,0.4);
+            --toggle-icon: '☀️';
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -14,468 +60,18 @@
 
         body {
             padding: 20px;
-            background-color: #f5f5f5;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background-color: white;
+            background-color: var(--container-bg);
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .user-selector {
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .user-selector select {
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-            min-width: 150px;
-        }
-
-        .user-selector label {
-            font-weight: bold;
-            color: #333;
-        }
-
-        .user-btn {
-            padding: 6px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            background-color: #2196F3;
-            color: white;
-            border: none;
-        }
-        
-        .user-btn.add {
-            background-color: #4CAF50;
-        }
-        
-        .user-btn.delete {
-            background-color: #f44336;
-        }
-
-        h1 {
-            color: #333;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .search-container {
-            margin-bottom: 20px;
-        }
-
-        #searchInput {
-            width: 100%;
-            padding: 10px;
-            font-size: 16px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            margin-bottom: 10px;
-        }
-
-        .add-item-form {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .add-item-form input {
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-
-        button {
-            padding: 8px 16px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        button:hover {
-            background-color: #45a049;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-
-        th {
-            background-color: #f8f8f8;
-            font-weight: bold;
-        }
-
-        tr:hover {
-            background-color: #f5f5f5;
-        }
-
-        .history-section {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
-        }
-
-        .history-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .history-item button {
-            background-color: #ff4444;
-        }
-
-        .history-item button:hover {
-            background-color: #cc0000;
-        }
-
-        .commit-section {
-            display: none;
-        }
-
-        .quantity-btn {
-            padding: 4px 8px;
-            margin: 0 4px;
-            background-color: #2196F3;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .quantity-btn:hover {
-            background-color: #1976D2;
-        }
-
-        .item-row {
-            position: relative;
-        }
-
-        .item-details {
-            display: none;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            padding: 15px;
-            margin-top: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .item-details.show {
-            display: block;
-        }
-
-        .item-details-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
-
-        .item-details-section {
-            margin-bottom: 10px;
-        }
-
-        .item-details-section label {
-            display: block;
-            margin-bottom: 5px;
-            color: #666;
-        }
-
-        .item-details-section textarea {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            resize: vertical;
-            min-height: 60px;
-        }
-
-        .item-details-section select {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-
-        .item-details-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .item-details-buttons button {
-            flex: 1;
-        }
-
-        .toggle-details-btn {
-            background: none;
-            border: none;
-            color: #2196F3;
-            cursor: pointer;
-            padding: 4px 8px;
-            font-size: 20px;
-        }
-
-        .toggle-details-btn:hover {
-            color: #1976D2;
-        }
-
-        .location-selector {
-            margin-bottom: 20px;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .location-selector select {
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-
-        .location-selector .location-name {
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-            width: 200px;
-        }
-
-        .location-selector button {
-            background-color: #4CAF50;
-        }
-
-        .location-selector button.delete {
-            background-color: #ff4444;
-        }
-
-        .location-quantities {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-top: 4px;
-            font-size: 0.9em;
-        }
-
-        .location-quantity {
-            background-color: #e3f2fd;
-            padding: 2px 6px;
-            border-radius: 3px;
-            color: #1976D2;
-        }
-
-        .location-quantity.current {
-            background-color: #c8e6c9;
-            color: #2e7d32;
-        }
-
-        .item-details-row {
-            background-color: #f8f8f8;
-        }
-
-        .item-details-row .item-details {
-            margin: 0;
-            border: none;
-            box-shadow: none;
-        }
-
-        .total-quantity {
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-
-        .location-quantities-list {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .location-quantity-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            background-color: #f5f5f5;
-            padding: 3px 6px;
-            border-radius: 4px;
-            margin-bottom: 4px;
-        }
-
-        .location-quantity-item.current {
-            background-color: #e0f7fa;
-            border-left: 3px solid #0288d1;
-        }
-
-        .quantity-controls {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .quantity-value {
-            min-width: 20px;
-            text-align: center;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .quantity-value:hover {
-            background-color: #e0e0e0;
-            border-radius: 2px;
-        }
-
-        /* Floor Plan Styles */
-        .floor-plan-button {
-            background-color: #2196F3;
-            margin-left: 10px;
-        }
-
-        .floor-plan-modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.7);
-        }
-
-        .floor-plan-content {
-            background-color: white;
-            margin: 5% auto;
-            padding: 20px;
-            width: 90%;
-            max-width: 1000px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            position: relative;
-        }
-
-        .floor-plan-close {
-            position: absolute;
-            right: 20px;
-            top: 15px;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .floor-plan-editor {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .floor-plan-tools {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            padding: 10px;
-            background-color: #f5f5f5;
-            border-radius: 4px;
-        }
-
-        .floor-plan-canvas-container {
-            border: 1px solid #ddd;
-            background-color: #f9f9f9;
-            min-height: 500px;
-            overflow: auto;
-            position: relative;
-        }
-
-        #floorPlanCanvas {
-            background-color: white;
-            box-shadow: 0 0 5px rgba(0,0,0,0.1);
-        }
-
-        .shape-button {
-            padding: 8px 12px;
-            background-color: #e0e0e0;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .shape-button.active {
-            background-color: #2196F3;
-            color: white;
-        }
-
-        .color-picker {
-            height: 30px;
-            width: 30px;
-            padding: 0;
-            border: 1px solid #ddd;
-        }
-
-        .product-placement-panel {
-            margin-top: 15px;
-            padding: 10px;
-            background-color: #f5f5f5;
-            border-radius: 4px;
-        }
-
-        .product-placement-list {
-            height: 200px;
-            overflow-y: auto;
-            margin-top: 10px;
-            border: 1px solid #ddd;
-            background-color: white;
-        }
-
-        .product-item {
-            padding: 8px;
-            border-bottom: 1px solid #eee;
-            cursor: move;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .product-item:hover {
-            background-color: #f0f0f0;
-        }
-
-        .placed-product {
-            position: absolute;
-            background-color: rgba(33, 150, 243, 0.7);
-            color: white;
-            padding: 5px;
-            border-radius: 3px;
-            font-size: 12px;
-            cursor: move;
-            z-index: 10;
-        }
-
-        .floor-plan-actions {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 15px;
+            box-shadow: 0 2px 4px var(--shadow-color);
         }
 
         .top-actions {
@@ -510,7 +106,369 @@
             color: white;
         }
         
-        .import-modal {
+        .theme-toggle {
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: none;
+            background-color: var(--button-secondary);
+            color: white;
+            margin-left: 10px;
+        }
+
+        .user-selector {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-selector select {
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 16px;
+            min-width: 150px;
+            background-color: var(--container-bg);
+            color: var(--text-color);
+        }
+
+        .user-selector label {
+            font-weight: bold;
+            color: var(--text-color);
+        }
+        
+        .user-btn {
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: var(--button-secondary);
+            color: white;
+            border: none;
+        }
+        
+        .user-btn.add {
+            background-color: var(--button-primary);
+        }
+        
+        .user-btn.delete {
+            background-color: var(--button-danger);
+        }
+
+        h1 {
+            color: var(--text-color);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .search-container {
+            margin-bottom: 20px;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 10px;
+            background-color: var(--container-bg);
+            color: var(--text-color);
+        }
+
+        .add-item-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .add-item-form input {
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--container-bg);
+            color: var(--text-color);
+        }
+
+        button {
+            padding: 8px 16px;
+            background-color: var(--button-primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: var(--button-primary-hover);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--header-bg);
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background-color: var(--highlight-bg);
+        }
+
+        .history-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid var(--history-item-border);
+        }
+
+        .history-item button {
+            background-color: var(--button-danger);
+        }
+
+        .history-item button:hover {
+            background-color: var(--button-danger-hover);
+        }
+
+        .commit-section {
+            display: none;
+        }
+
+        .quantity-btn {
+            padding: 4px 8px;
+            margin: 0 4px;
+            background-color: var(--button-secondary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .quantity-btn:hover {
+            background-color: var(--button-secondary-hover);
+        }
+
+        .item-row {
+            position: relative;
+        }
+
+        .item-details {
+            display: none;
+            background: var(--container-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 10px;
+            box-shadow: 0 2px 4px var(--shadow-color);
+        }
+
+        .item-details.show {
+            display: block;
+        }
+
+        .item-details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .item-details-section {
+            margin-bottom: 10px;
+        }
+
+        .item-details-section label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text-color);
+        }
+
+        .item-details-section textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            resize: vertical;
+            min-height: 60px;
+            background-color: var(--container-bg);
+            color: var(--text-color);
+        }
+
+        .item-details-section select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--container-bg);
+            color: var(--text-color);
+        }
+
+        .item-details-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .item-details-buttons button {
+            flex: 1;
+        }
+
+        .toggle-details-btn {
+            background: none;
+            border: none;
+            color: var(--button-secondary);
+            cursor: pointer;
+            padding: 4px 8px;
+            font-size: 20px;
+        }
+
+        .toggle-details-btn:hover {
+            color: var(--button-secondary-hover);
+        }
+
+        .location-selector {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .location-selector select {
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 16px;
+            background-color: var(--container-bg);
+            color: var(--text-color);
+        }
+
+        .location-selector .location-name {
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 16px;
+            width: 200px;
+            background-color: var(--container-bg);
+            color: var(--text-color);
+        }
+
+        .location-selector button {
+            background-color: var(--button-primary);
+        }
+
+        .location-selector button.delete {
+            background-color: var(--button-danger);
+        }
+
+        .location-quantities {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 4px;
+            font-size: 0.9em;
+        }
+
+        .location-quantity {
+            background-color: var(--location-quantity-bg);
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: var(--location-quantity-color);
+        }
+
+        .location-quantity.current {
+            background-color: var(--location-quantity-current-bg);
+            color: var(--location-quantity-current-color);
+        }
+
+        .item-details-row {
+            background-color: var(--header-bg);
+        }
+
+        .item-details-row .item-details {
+            margin: 0;
+            border: none;
+            box-shadow: none;
+        }
+
+        .total-quantity {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .location-quantities-list {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .location-quantity-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background-color: var(--highlight-bg);
+            padding: 3px 6px;
+            border-radius: 4px;
+            margin-bottom: 4px;
+        }
+
+        .location-quantity-item.current {
+            background-color: var(--location-quantity-bg);
+            border-left: 3px solid var(--location-quantity-color);
+        }
+
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .quantity-value {
+            min-width: 20px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .quantity-value:hover {
+            background-color: var(--highlight-bg);
+            border-radius: 2px;
+        }
+
+        .no-results {
+            padding: 15px;
+            text-align: center;
+            color: var(--text-color);
+            font-style: italic;
+            background-color: var(--header-bg);
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+
+        /* Floor Plan Styles */
+        .floor-plan-button {
+            background-color: var(--button-secondary);
+            margin-left: 10px;
+        }
+
+        .floor-plan-modal {
             display: none;
             position: fixed;
             z-index: 1000;
@@ -520,15 +478,124 @@
             height: 100%;
             background-color: rgba(0,0,0,0.7);
         }
-        
-        .import-modal-content {
-            background-color: white;
-            margin: 10% auto;
+
+        .floor-plan-content {
+            background-color: var(--container-bg);
+            margin: 5% auto;
             padding: 20px;
-            width: 50%;
-            border-radius: 5px;
+            width: 90%;
+            max-width: 1000px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px var(--shadow-color);
+            position: relative;
+            color: var(--text-color);
         }
-        
+
+        .floor-plan-close {
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+
+        .floor-plan-editor {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .floor-plan-tools {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 10px;
+            background-color: var(--highlight-bg);
+            border-radius: 4px;
+        }
+
+        .floor-plan-canvas-container {
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-color);
+            min-height: 500px;
+            overflow: auto;
+            position: relative;
+        }
+
+        #floorPlanCanvas {
+            background-color: var(--container-bg);
+            box-shadow: 0 0 5px var(--shadow-color);
+        }
+
+        .shape-button {
+            padding: 8px 12px;
+            background-color: var(--highlight-bg);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+
+        .shape-button.active {
+            background-color: var(--button-secondary);
+            color: white;
+        }
+
+        .color-picker {
+            height: 30px;
+            width: 30px;
+            padding: 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .product-placement-panel {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: var(--highlight-bg);
+            border-radius: 4px;
+        }
+
+        .product-placement-list {
+            height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+            border: 1px solid var(--border-color);
+            background-color: var(--container-bg);
+        }
+
+        .product-item {
+            padding: 8px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: move;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-color);
+        }
+
+        .product-item:hover {
+            background-color: var(--highlight-bg);
+        }
+
+        .placed-product {
+            position: absolute;
+            background-color: rgba(33, 150, 243, 0.7);
+            color: white;
+            padding: 5px;
+            border-radius: 3px;
+            font-size: 12px;
+            cursor: move;
+            z-index: 10;
+        }
+
+        .floor-plan-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+
         /* Enhance user selector on smaller screens */
         @media (max-width: 768px) {
             .top-actions {
@@ -537,16 +604,6 @@
             .user-selector, .data-actions {
                 width: 100%;
             }
-        }
-
-        .no-results {
-            padding: 15px;
-            text-align: center;
-            color: #777;
-            font-style: italic;
-            background-color: #f8f8f8;
-            border-radius: 4px;
-            margin: 10px 0;
         }
     </style>
 </head>
@@ -570,6 +627,7 @@
                 <button onclick="exportData()" class="action-btn export">Export Data</button>
                 <button onclick="importData()" class="action-btn import">Import Data</button>
                 <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImportFile(event)">
+                <button onclick="toggleTheme()" class="theme-toggle" id="themeToggle">🌙 Dark Mode</button>
             </div>
         </div>
         
@@ -660,6 +718,28 @@
         let currentUser = 'User 1';
         let currentUserId = '';
         let db;
+        let currentTheme = localStorage.getItem('theme') || 'light';
+
+        // Set up theme on initial load
+        function applyTheme() {
+            if (currentTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                document.getElementById('themeToggle').textContent = '☀️ Light Mode';
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                document.getElementById('themeToggle').textContent = '🌙 Dark Mode';
+            }
+        }
+
+        // Apply theme immediately
+        applyTheme();
+
+        // Toggle between light and dark mode
+        function toggleTheme() {
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            localStorage.setItem('theme', currentTheme);
+            applyTheme();
+        }
 
         const initDB = async () => {
             try {
