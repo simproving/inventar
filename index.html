@@ -26,6 +26,43 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
+        .user-selector {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-selector select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            min-width: 150px;
+        }
+
+        .user-selector label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .user-btn {
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+        }
+        
+        .user-btn.add {
+            background-color: #4CAF50;
+        }
+        
+        .user-btn.delete {
+            background-color: #f44336;
+        }
+
         h1 {
             color: #333;
             margin-bottom: 20px;
@@ -237,10 +274,6 @@
             background-color: #ff4444;
         }
 
-        .location-selector button.delete:hover {
-            background-color: #cc0000;
-        }
-
         .location-quantities {
             display: flex;
             gap: 8px;
@@ -444,11 +477,101 @@
             justify-content: space-between;
             margin-top: 15px;
         }
+
+        .top-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .data-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .action-btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: none;
+            font-weight: bold;
+        }
+        
+        .action-btn.export {
+            background-color: #673AB7;
+            color: white;
+        }
+        
+        .action-btn.import {
+            background-color: #FF9800;
+            color: white;
+        }
+        
+        .import-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+        }
+        
+        .import-modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            width: 50%;
+            border-radius: 5px;
+        }
+        
+        /* Enhance user selector on smaller screens */
+        @media (max-width: 768px) {
+            .top-actions {
+                flex-direction: column;
+            }
+            .user-selector, .data-actions {
+                width: 100%;
+            }
+        }
+
+        .no-results {
+            padding: 15px;
+            text-align: center;
+            color: #777;
+            font-style: italic;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Inventory System</h1>
+        
+        <div class="top-actions">
+            <div class="user-selector">
+                <label for="userSelect">Current User: </label>
+                <select id="userSelect" onchange="changeUser()">
+                    <option value="User 1">User 1</option>
+                    <option value="User 2">User 2</option>
+                </select>
+                <button onclick="renameUser()" class="user-btn">Rename</button>
+                <button onclick="addUser()" class="user-btn add">Add User</button>
+                <button onclick="deleteUser()" class="user-btn delete">Delete</button>
+            </div>
+            
+            <div class="data-actions">
+                <button onclick="exportData()" class="action-btn export">Export Data</button>
+                <button onclick="importData()" class="action-btn import">Import Data</button>
+                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImportFile(event)">
+            </div>
+        </div>
         
         <div class="location-selector">
             <select id="locationSelect" onchange="changeLocation()">
@@ -532,14 +655,17 @@
         let inventoryItems = [];
         let locations = [];
         let transactions = [];
+        let users = [];
         let currentLocation = '';
+        let currentUser = 'User 1';
+        let currentUserId = '';
         let db;
 
         const initDB = async () => {
             try {
-                db = await idb.openDB('inventoryDB', 3, {
+                db = await idb.openDB('inventoryDB', 4, {
                     upgrade(db, oldVersion, newVersion, transaction) {
-                        console.log('Creating database schema version 3');
+                        console.log(`Upgrading database from version ${oldVersion} to ${newVersion}`);
                         
                         // Create object stores matching the schema in README
                         if (!db.objectStoreNames.contains('products')) {
@@ -552,7 +678,7 @@
                             locationStore.createIndex('name', 'name', { unique: false });
                         }
                         
-                        if (!db.objectStoreNames.contains('inventory')) {
+                    if (!db.objectStoreNames.contains('inventory')) {
                             const inventoryStore = db.createObjectStore('inventory', { keyPath: 'id', autoIncrement: false });
                             inventoryStore.createIndex('productId', 'productId', { unique: false });
                             inventoryStore.createIndex('locationId', 'locationId', { unique: false });
@@ -566,6 +692,12 @@
                         // Add floor plans store
                         if (!db.objectStoreNames.contains('floorPlans')) {
                             db.createObjectStore('floorPlans', { keyPath: 'locationId' });
+                        }
+                        
+                        // Add users store
+                        if (!db.objectStoreNames.contains('users')) {
+                            console.log('Creating users object store');
+                            db.createObjectStore('users', { keyPath: 'id' });
                         }
                     }
                 });
@@ -598,7 +730,7 @@
             try {
                 const data = await db.getAll(storeName);
                 return data;
-            } catch (error) {
+                } catch (error) {
                 console.error(`Error loading data from ${storeName}:`, error);
                 throw error;
             }
@@ -611,10 +743,40 @@
                 inventoryItems = await loadFromIndexedDB('inventory') || [];
                 transactions = await loadFromIndexedDB('transactions') || [];
                 
+                // Try to load users, handle errors gracefully
+                try {
+                    users = await loadFromIndexedDB('users') || [];
+                    console.log('Loaded users:', users);
+                } catch (error) {
+                    console.error('Error loading users:', error);
+                    users = [];
+                }
+                
                 // Set default location if empty
                 if (locations.length === 0) {
                     locations = [{ id: '1', name: 'Location 1' }];
                     await saveToIndexedDB('locations', locations);
+                }
+                
+                // Set default users if empty
+                if (users.length === 0) {
+                    users = [
+                        { id: 'user-1', name: 'User 1' },
+                        { id: 'user-2', name: 'User 2' }
+                    ];
+                    try {
+                        await saveToIndexedDB('users', users);
+                        console.log('Created default users:', users);
+                    } catch (error) {
+                        console.error('Error saving default users:', error);
+                        // We'll continue with in-memory users even if saving fails
+                    }
+                }
+                
+                // Set current user
+                if (users.length > 0) {
+                    currentUser = users[0].name;
+                    currentUserId = users[0].id;
                 }
                 
                 // Add example product if no products exist
@@ -683,6 +845,9 @@
                 console.log('IndexedDB initialized');
                 await loadData();
                 
+                // Initialize users dropdown
+                await loadUsers();
+
                 // Update UI
                 updateLocationSelect();
                 updateTable();
@@ -719,7 +884,7 @@
                 try {
                     await saveToIndexedDB('products', products);
                     console.log('Products saved successfully');
-                } catch (error) {
+            } catch (error) {
                     console.error('Error saving products:', error);
                     alert(`Error saving products data: ${error.message || 'Unknown error'}`);
                     throw error;
@@ -790,17 +955,17 @@
             if (locationIndex !== -1) {
                 const oldName = locations[locationIndex].name;
                 locations[locationIndex].name = newName;
-                
-                await addToHistory({
-                    type: 'rename_location',
+            
+            await addToHistory({
+                type: 'rename_location',
                     locationId: currentLocation,
-                    oldName: oldName,
-                    newName: newName,
-                    timestamp: new Date().toISOString()
-                });
+                oldName: oldName,
+                newName: newName,
+                timestamp: new Date().toISOString()
+            });
 
                 await save();
-                updateLocationSelect();
+            updateLocationSelect();
             }
         }
 
@@ -871,8 +1036,8 @@
             if (!product) {
                 product = { 
                     id: Date.now().toString(),
-                    name,
-                    price,
+                name, 
+                price,
                     comments: '',
                     aliases: []
                 };
@@ -889,15 +1054,15 @@
                 const oldQuantity = inventoryEntry.quantity;
                 inventoryEntry.quantity += quantity;
                 
-                await addToHistory({
+            await addToHistory({
                     type: 'update_quantity',
                     productId: product.id,
                     productName: product.name,
                     locationId: currentLocation,
                     oldQuantity,
                     newQuantity: inventoryEntry.quantity,
-                    timestamp: new Date().toISOString()
-                });
+                timestamp: new Date().toISOString()
+            });
             } else {
                 // Create new inventory entry
                 inventoryEntry = {
@@ -936,15 +1101,15 @@
                 for (const entry of affectedEntries) {
                     const locationName = locations.find(loc => loc.id === entry.locationId)?.name || 'Unknown';
                     
-                    await addToHistory({
+                await addToHistory({
                         type: 'delete_inventory',
                         productId,
                         productName: product.name,
                         locationId: entry.locationId,
                         locationName,
                         quantity: entry.quantity,
-                        timestamp: new Date().toISOString()
-                    });
+                    timestamp: new Date().toISOString()
+                });
                 }
                 
                 // Remove all inventory entries for this product
@@ -1474,6 +1639,7 @@
 
         function updateHistory() {
             const historyList = document.getElementById('historyList');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             historyList.innerHTML = '';
             
             if (!Array.isArray(transactions)) {
@@ -1486,7 +1652,25 @@
                 new Date(b.timestamp) - new Date(a.timestamp)
             );
             
-            sortedTransactions.forEach((transaction, index) => {
+            // Filter transactions if search term is provided
+            const filteredTransactions = searchTerm ? 
+                sortedTransactions.filter(transaction => {
+                    // Check for product name match in the transaction
+                    const productNameMatch = transaction.productName && 
+                        transaction.productName.toLowerCase().includes(searchTerm);
+                    
+                    // Check for product id match (if it references a product that matches search)
+                    const productIdMatch = transaction.productId && 
+                        products.some(p => p.id === transaction.productId && 
+                            (p.name.toLowerCase().includes(searchTerm) || 
+                             (Array.isArray(p.aliases) && p.aliases.some(alias => 
+                                alias.toLowerCase().includes(searchTerm)))));
+                    
+                    return productNameMatch || productIdMatch;
+                }) : 
+                sortedTransactions;
+            
+            filteredTransactions.forEach((transaction, index) => {
                 const div = document.createElement('div');
                 div.className = 'history-item';
                 let changeText = '';
@@ -1500,38 +1684,38 @@
                     
                     switch (transaction.type) {
                         case 'add_inventory':
-                            changeText = `Added ${transaction.quantity} ${transaction.productName} to ${getLocationName(transaction.locationId)}`;
+                            changeText = `[${transaction.user}] Added ${transaction.quantity} ${transaction.productName} to ${getLocationName(transaction.locationId)}`;
                             break;
                         case 'delete_inventory':
                             const locationDisplayName = transaction.locationName || getLocationName(transaction.locationId);
-                            changeText = `Deleted ${transaction.productName} from ${locationDisplayName}`;
+                            changeText = `[${transaction.user}] Deleted ${transaction.productName} from ${locationDisplayName}`;
                             break;
                         case 'delete_product':
-                            changeText = `Removed product ${transaction.productName} completely`;
+                            changeText = `[${transaction.user}] Removed product ${transaction.productName} completely`;
                             break;
                         case 'update_quantity':
-                            changeText = `Changed quantity of ${transaction.productName} from ${transaction.oldQuantity} to ${transaction.newQuantity} in ${getLocationName(transaction.locationId)}`;
+                            changeText = `[${transaction.user}] Changed quantity of ${transaction.productName} from ${transaction.oldQuantity} to ${transaction.newQuantity} in ${getLocationName(transaction.locationId)}`;
                             break;
                         case 'edit_product':
-                            changeText = `Changed ${transaction.field} of ${transaction.productName} from ${transaction.oldValue} to ${transaction.newValue}`;
+                            changeText = `[${transaction.user}] Changed ${transaction.field} of ${transaction.productName} from ${transaction.oldValue} to ${transaction.newValue}`;
                             break;
                         case 'update_details':
-                            changeText = `Updated details for ${transaction.productName}`;
+                            changeText = `[${transaction.user}] Updated details for ${transaction.productName}`;
                             break;
                         case 'add_location':
-                            changeText = `Added new location: ${transaction.location.name}`;
+                            changeText = `[${transaction.user}] Added new location: ${transaction.location.name}`;
                             break;
                         case 'delete_location':
-                            changeText = `Deleted location: ${transaction.location.name}`;
+                            changeText = `[${transaction.user}] Deleted location: ${transaction.location.name}`;
                             break;
                         case 'rename_location':
-                            changeText = `Renamed ${transaction.oldName} to ${transaction.newName}`;
+                            changeText = `[${transaction.user}] Renamed ${transaction.oldName} to ${transaction.newName}`;
                             break;
                         case 'update_comments':
-                            changeText = `Updated comments for ${transaction.productName}`;
+                            changeText = `[${transaction.user}] Updated comments for ${transaction.productName}`;
                             break;
                         default:
-                            changeText = `Unknown transaction type: ${transaction.type}`;
+                            changeText = `[${transaction.user}] Unknown transaction type: ${transaction.type}`;
                     }
                 } catch (error) {
                     console.error('Error processing transaction entry:', error, transaction);
@@ -1540,13 +1724,24 @@
 
                 div.innerHTML = `
                     <span>${changeText} - ${formatDate(transaction.timestamp)}</span>
-                    <button onclick="revertChange(${index})">Revert</button>
+                    <button onclick="revertChange(${sortedTransactions.indexOf(transaction)})">Revert</button>
                 `;
                 historyList.appendChild(div);
             });
+            
+            // Show a message if no matching transactions
+            if (searchTerm && filteredTransactions.length === 0) {
+                const noResults = document.createElement('div');
+                noResults.className = 'no-results';
+                noResults.textContent = 'No matching history items found.';
+                historyList.appendChild(noResults);
+            }
         }
 
         async function addToHistory(change) {
+            // Add user information to the change record
+            change.user = currentUser;
+            change.userId = currentUserId;
             transactions.push(change);
             await save();
             updateHistory();
@@ -1679,7 +1874,10 @@
             }
         }
 
-        document.getElementById('searchInput').addEventListener('input', updateTable);
+        document.getElementById('searchInput').addEventListener('input', function() {
+            updateTable();
+            updateHistory(); // Also update history when search input changes
+        });
 
         // Initial load
         updateLocationSelect();
@@ -2320,6 +2518,299 @@
                         btn.disabled = true;
                     }
                 });
+            }
+        }
+
+        function changeUser() {
+            const userSelect = document.getElementById('userSelect');
+            const selectedUserName = userSelect.value;
+            const selectedUser = users.find(user => user.name === selectedUserName);
+            
+            if (selectedUser) {
+                currentUser = selectedUser.name;
+                currentUserId = selectedUser.id;
+                console.log('Current user changed to:', currentUser, '(ID:', currentUserId, ')');
+            }
+        }
+        
+        async function renameUser() {
+            const userSelect = document.getElementById('userSelect');
+            const selectedUserName = userSelect.value;
+            const selectedUser = users.find(user => user.name === selectedUserName);
+            
+            if (!selectedUser) return;
+            
+            const newName = prompt("Enter new name for " + selectedUserName + ":", selectedUserName);
+            
+            if (newName && newName.trim() !== "") {
+                // Update option text
+                const selectedOption = userSelect.options[userSelect.selectedIndex];
+                selectedOption.text = newName;
+                selectedOption.value = newName;
+                
+                // Update in users array
+                selectedUser.name = newName;
+                
+                // Update current user
+                currentUser = newName;
+                
+                // Update in history
+                updateUserInHistory(selectedUserName, newName);
+                
+                // Save to IndexedDB
+                await saveToIndexedDB('users', users);
+                
+                console.log('User renamed from', selectedUserName, 'to', newName);
+            }
+        }
+        
+        async function addUser() {
+            const userSelect = document.getElementById('userSelect');
+            const newName = prompt("Enter name for new user:", "");
+            
+            if (newName && newName.trim() !== "") {
+                // Create new user object
+                const newUser = {
+                    id: 'user-' + Date.now(),
+                    name: newName
+                };
+                
+                // Add to users array
+                users.push(newUser);
+                
+                // Create new option
+                const option = document.createElement('option');
+                option.text = newName;
+                option.value = newName;
+                userSelect.add(option);
+                
+                // Select the new user
+                userSelect.value = newName;
+                currentUser = newName;
+                currentUserId = newUser.id;
+                
+                // Save to IndexedDB
+                await saveToIndexedDB('users', users);
+                
+                console.log('New user added:', newName, '(ID:', newUser.id, ')');
+            }
+        }
+        
+        async function deleteUser() {
+            const userSelect = document.getElementById('userSelect');
+            
+            // Prevent deleting if only one user remains
+            if (userSelect.options.length <= 1) {
+                alert("Cannot delete the last user.");
+                return;
+            }
+            
+            const selectedUserName = userSelect.value;
+            const userIndex = users.findIndex(user => user.name === selectedUserName);
+            
+            if (userIndex === -1) return;
+            
+            if (confirm("Are you sure you want to delete user: " + selectedUserName + "?")) {
+                // Remove from users array
+                users.splice(userIndex, 1);
+                
+                // Remove the selected option
+                userSelect.remove(userSelect.selectedIndex);
+                
+                // Update current user to the first available
+                currentUser = userSelect.value;
+                const newSelectedUser = users.find(user => user.name === currentUser);
+                if (newSelectedUser) {
+                    currentUserId = newSelectedUser.id;
+                }
+                
+                // Save to IndexedDB
+                await saveToIndexedDB('users', users);
+                
+                console.log('User deleted:', selectedUserName);
+            }
+        }
+        
+        function updateUserInHistory(oldName, newName) {
+            // Update username in transaction history
+            for (const transaction of transactions) {
+                if (transaction.user === oldName) {
+                    transaction.user = newName;
+                }
+            }
+            
+            // Update the display
+            updateHistory();
+            
+            // Save changes
+            save();
+        }
+        
+        async function loadUsers() {
+            // Update user dropdown from users array
+            const userSelect = document.getElementById('userSelect');
+            userSelect.innerHTML = '';
+            
+            for (const user of users) {
+                const option = document.createElement('option');
+                option.text = user.name;
+                option.value = user.name;
+                userSelect.add(option);
+            }
+            
+            // Select current user
+            if (currentUser) {
+                userSelect.value = currentUser;
+            }
+        }
+
+        // Export/Import Functions
+        async function exportData() {
+            try {
+                // Collect all data from IndexedDB
+                const exportData = {
+                    products: await loadFromIndexedDB('products') || [],
+                    locations: await loadFromIndexedDB('locations') || [],
+                    inventory: await loadFromIndexedDB('inventory') || [],
+                    transactions: await loadFromIndexedDB('transactions') || [],
+                    users: await loadFromIndexedDB('users') || [],
+                    floorPlans: await loadFromIndexedDB('floorPlans') || [],
+                    exportDate: new Date().toISOString(),
+                    appVersion: '1.0.0'
+                };
+                
+                // Convert to JSON string
+                const jsonData = JSON.stringify(exportData, null, 2);
+                
+                // Create blob and download link
+                const blob = new Blob([jsonData], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                // Format date for filename
+                const date = new Date();
+                const dateStr = date.toISOString().split('T')[0];
+                
+                // Create download link
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `inventory_export_${dateStr}.json`;
+                document.body.appendChild(a);
+                a.click();
+                
+                // Clean up
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 100);
+                
+                console.log('Data exported successfully');
+            } catch (error) {
+                console.error('Error exporting data:', error);
+                alert('Error exporting data: ' + error.message);
+            }
+        }
+        
+        function importData() {
+            // Trigger file input click
+            document.getElementById('importFile').click();
+        }
+        
+        async function handleImportFile(event) {
+            try {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                // Confirm before importing
+                if (!confirm('Importing data will replace all current data. Continue?')) {
+                    event.target.value = null;
+                    return;
+                }
+                
+                // Read file
+                const reader = new FileReader();
+                
+                reader.onload = async (e) => {
+                    try {
+                        // Parse JSON data
+                        const importData = JSON.parse(e.target.result);
+                        
+                        // Validate data structure
+                        if (!importData.products || !importData.locations || !importData.inventory) {
+                            throw new Error('Invalid import file format');
+                        }
+                        
+                        // Show loading message
+                        alert('Importing data... Please wait.');
+                        
+                        // Import each store
+                        if (importData.products && Array.isArray(importData.products)) {
+                            await saveToIndexedDB('products', importData.products);
+                            products = importData.products;
+                        }
+                        
+                        if (importData.locations && Array.isArray(importData.locations)) {
+                            await saveToIndexedDB('locations', importData.locations);
+                            locations = importData.locations;
+                        }
+                        
+                        if (importData.inventory && Array.isArray(importData.inventory)) {
+                            await saveToIndexedDB('inventory', importData.inventory);
+                            inventoryItems = importData.inventory;
+                        }
+                        
+                        if (importData.transactions && Array.isArray(importData.transactions)) {
+                            await saveToIndexedDB('transactions', importData.transactions);
+                            transactions = importData.transactions;
+                        }
+                        
+                        if (importData.users && Array.isArray(importData.users)) {
+                            await saveToIndexedDB('users', importData.users);
+                            users = importData.users;
+                        }
+                        
+                        if (importData.floorPlans && Array.isArray(importData.floorPlans)) {
+                            // Clear existing floor plans
+                            const tx = db.transaction('floorPlans', 'readwrite');
+                            await tx.objectStore('floorPlans').clear();
+                            await tx.done;
+                            
+                            // Import floor plans
+                            for (const floorPlan of importData.floorPlans) {
+                                await db.put('floorPlans', floorPlan);
+                            }
+                        }
+                        
+                        // Set current location to first available
+                        if (locations.length > 0) {
+                            currentLocation = locations[0].id;
+                        }
+                        
+                        // Update UI
+                        await loadUsers();
+                        updateLocationSelect();
+                        updateTable();
+                        updateHistory();
+                        
+                        console.log('Data imported successfully');
+                        alert('Data imported successfully!');
+                    } catch (error) {
+                        console.error('Error parsing import file:', error);
+                        alert('Error importing data: ' + error.message);
+                    }
+                };
+                
+                reader.onerror = () => {
+                    console.error('Error reading file');
+                    alert('Error reading file');
+                };
+                
+                reader.readAsText(file);
+                
+                // Reset file input
+                event.target.value = null;
+            } catch (error) {
+                console.error('Error handling import file:', error);
+                alert('Error handling import file: ' + error.message);
             }
         }
     </script>
