@@ -314,6 +314,136 @@
             background-color: #e0e0e0;
             border-radius: 2px;
         }
+
+        /* Floor Plan Styles */
+        .floor-plan-button {
+            background-color: #2196F3;
+            margin-left: 10px;
+        }
+
+        .floor-plan-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+        }
+
+        .floor-plan-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            width: 90%;
+            max-width: 1000px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        .floor-plan-close {
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .floor-plan-editor {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .floor-plan-tools {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+        }
+
+        .floor-plan-canvas-container {
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+            min-height: 500px;
+            overflow: auto;
+            position: relative;
+        }
+
+        #floorPlanCanvas {
+            background-color: white;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+
+        .shape-button {
+            padding: 8px 12px;
+            background-color: #e0e0e0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .shape-button.active {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        .color-picker {
+            height: 30px;
+            width: 30px;
+            padding: 0;
+            border: 1px solid #ddd;
+        }
+
+        .product-placement-panel {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+        }
+
+        .product-placement-list {
+            height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            background-color: white;
+        }
+
+        .product-item {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            cursor: move;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .product-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        .placed-product {
+            position: absolute;
+            background-color: rgba(33, 150, 243, 0.7);
+            color: white;
+            padding: 5px;
+            border-radius: 3px;
+            font-size: 12px;
+            cursor: move;
+            z-index: 10;
+        }
+
+        .floor-plan-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
@@ -327,6 +457,7 @@
             <input type="text" id="locationName" class="location-name" placeholder="Location Name" onchange="renameLocation()">
             <button onclick="addLocation()">Add Location</button>
             <button onclick="deleteLocation()" class="delete">Delete Location</button>
+            <button onclick="openFloorPlan()" class="floor-plan-button">Floor Plan</button>
         </div>
 
         <div class="search-container">
@@ -358,6 +489,43 @@
         </div>
     </div>
 
+    <!-- Floor Plan Modal -->
+    <div id="floorPlanModal" class="floor-plan-modal">
+        <div class="floor-plan-content">
+            <span class="floor-plan-close" onclick="closeFloorPlan()">&times;</span>
+            <h2>Floor Plan - <span id="floorPlanLocationName"></span></h2>
+            
+            <div class="floor-plan-editor">
+                <div class="floor-plan-tools">
+                    <button class="shape-button active" data-tool="select" onclick="selectTool('select')">Select</button>
+                    <button class="shape-button" data-tool="rectangle" onclick="selectTool('rectangle')">Rectangle</button>
+                    <button class="shape-button" data-tool="circle" onclick="selectTool('circle')">Circle</button>
+                    <button class="shape-button" data-tool="text" onclick="selectTool('text')">Text</button>
+                    <input type="color" class="color-picker" id="shapeColor" value="#CCCCCC">
+                    <button onclick="deleteSelected()">Delete Selected</button>
+                    <div style="flex-grow: 1;"></div>
+                    <button onclick="clearFloorPlan()">Clear All</button>
+                </div>
+                
+                <div class="floor-plan-canvas-container">
+                    <canvas id="floorPlanCanvas" width="800" height="600"></canvas>
+                    <div id="placedProducts"></div>
+                </div>
+                
+                <div class="product-placement-panel">
+                    <h3>Place Products on Floor Plan</h3>
+                    <p>Drag products onto the floor plan to show their locations</p>
+                    <div class="product-placement-list" id="productList"></div>
+                </div>
+                
+                <div class="floor-plan-actions">
+                    <button onclick="saveFloorPlan()">Save Floor Plan</button>
+                    <button onclick="viewFloorPlan()">View Mode</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/idb@8/build/umd.js"></script>
     <script>
         let products = [];
@@ -369,9 +537,9 @@
 
         const initDB = async () => {
             try {
-                db = await idb.openDB('inventoryDB', 2, {
+                db = await idb.openDB('inventoryDB', 3, {
                     upgrade(db, oldVersion, newVersion, transaction) {
-                        console.log('Creating database schema version 2');
+                        console.log('Creating database schema version 3');
                         
                         // Create object stores matching the schema in README
                         if (!db.objectStoreNames.contains('products')) {
@@ -393,6 +561,11 @@
                         
                         if (!db.objectStoreNames.contains('transactions')) {
                             db.createObjectStore('transactions', { keyPath: 'timestamp' });
+                        }
+                        
+                        // Add floor plans store
+                        if (!db.objectStoreNames.contains('floorPlans')) {
+                            db.createObjectStore('floorPlans', { keyPath: 'locationId' });
                         }
                     }
                 });
@@ -1649,6 +1822,506 @@
                 alert('Failed to initialize the application. Please refresh the page or check console for details.');
             });
         });
+
+        // Floor Plan functionality
+        let floorPlanData = {};
+        let currentTool = 'select';
+        let shapes = [];
+        let selectedShape = null;
+        let isDrawing = false;
+        let startX, startY;
+        let placedProducts = [];
+        let isDragging = false;
+        let draggedElement = null;
+        let dragOffsetX, dragOffsetY;
+        let canvas, ctx;
+        let isEditMode = true;
+
+        function openFloorPlan() {
+            const modal = document.getElementById('floorPlanModal');
+            modal.style.display = 'block';
+            
+            // Set location name
+            const locationName = locations.find(loc => loc.id === currentLocation)?.name || 'Unknown Location';
+            document.getElementById('floorPlanLocationName').textContent = locationName;
+            
+            // Initialize canvas
+            canvas = document.getElementById('floorPlanCanvas');
+            ctx = canvas.getContext('2d');
+            
+            // Load existing floor plan data
+            loadFloorPlan(currentLocation);
+            
+            // Load products for placement
+            loadProductsForPlacement();
+            
+            // Set up event listeners
+            setupCanvasEvents();
+        }
+
+        function closeFloorPlan() {
+            const modal = document.getElementById('floorPlanModal');
+            modal.style.display = 'none';
+        }
+
+        async function loadFloorPlan(locationId) {
+            try {
+                console.log('Loading floor plan for location:', locationId);
+                
+                // Load floor plan data from IndexedDB using the idb library
+                const floorPlan = await db.get('floorPlans', locationId);
+                
+                if (floorPlan) {
+                    console.log('Floor plan data loaded:', floorPlan);
+                    shapes = floorPlan.shapes || [];
+                    placedProducts = floorPlan.placedProducts || [];
+                    
+                    // Draw the shapes
+                    drawFloorPlan();
+                    
+                    // Place the products
+                    const placedProductsContainer = document.getElementById('placedProducts');
+                    placedProductsContainer.innerHTML = '';
+                    
+                    placedProducts.forEach(product => {
+                        const productElement = document.createElement('div');
+                        productElement.className = 'placed-product';
+                        productElement.textContent = product.name;
+                        productElement.style.left = product.x + 'px';
+                        productElement.style.top = product.y + 'px';
+                        productElement.dataset.productId = product.productId;
+                        
+                        productElement.addEventListener('mousedown', startDraggingProduct);
+                        
+                        placedProductsContainer.appendChild(productElement);
+                    });
+                } else {
+                    console.log('No floor plan found for location:', locationId);
+                    // Create empty floor plan
+                    shapes = [];
+                    placedProducts = [];
+                    clearCanvas();
+                }
+            } catch (error) {
+                console.error('Error loading floor plan:', error);
+                alert('Error loading floor plan: ' + error.message);
+                shapes = [];
+                placedProducts = [];
+                clearCanvas();
+            }
+        }
+
+        async function saveFloorPlan() {
+            try {
+                // Create floor plan object
+                const floorPlan = {
+                    locationId: currentLocation,
+                    shapes: shapes,
+                    placedProducts: placedProducts
+                };
+                
+                console.log('Saving floor plan:', floorPlan);
+                
+                // Use the idb library's put method directly
+                await db.put('floorPlans', floorPlan);
+                
+                // Verify the save by reading it back
+                const savedPlan = await db.get('floorPlans', currentLocation);
+                if (savedPlan) {
+                    console.log('Floor plan saved and verified:', savedPlan);
+                    alert('Floor plan saved successfully!');
+                } else {
+                    throw new Error('Floor plan was not saved correctly');
+                }
+            } catch (error) {
+                console.error('Error saving floor plan:', error);
+                alert('Error saving floor plan: ' + error.message);
+            }
+        }
+
+        function setupCanvasEvents() {
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+            
+            // Set up product dragging events
+            const placedProductsContainer = document.getElementById('placedProducts');
+            placedProductsContainer.addEventListener('mouseup', stopDragging);
+            placedProductsContainer.addEventListener('mousemove', dragProduct);
+        }
+
+        function loadProductsForPlacement() {
+            const productList = document.getElementById('productList');
+            productList.innerHTML = '';
+            
+            // Get products with inventory in this location
+            const productsInLocation = inventoryItems
+                .filter(item => item.locationId === currentLocation)
+                .map(item => {
+                    const product = products.find(p => p.id === item.productId);
+                    return {
+                        id: product.id,
+                        name: product.name,
+                        quantity: item.quantity
+                    };
+                });
+            
+            productsInLocation.forEach(product => {
+                const productItem = document.createElement('div');
+                productItem.className = 'product-item';
+                productItem.innerHTML = `
+                    <span>${product.name}</span>
+                    <span>(Qty: ${product.quantity})</span>
+                `;
+                productItem.dataset.productId = product.id;
+                productItem.dataset.productName = product.name;
+                
+                productItem.draggable = true;
+                productItem.addEventListener('dragstart', onDragStart);
+                
+                productList.appendChild(productItem);
+            });
+            
+            // Make canvas container droppable
+            const canvasContainer = document.querySelector('.floor-plan-canvas-container');
+            canvasContainer.addEventListener('dragover', onDragOver);
+            canvasContainer.addEventListener('drop', onDrop);
+        }
+
+        function selectTool(tool) {
+            currentTool = tool;
+            
+            // Update active button
+            document.querySelectorAll('.shape-button').forEach(button => {
+                if (button.dataset.tool === tool) {
+                    button.classList.add('active');
+                } else {
+                    button.classList.remove('active');
+                }
+            });
+        }
+
+        function startDrawing(e) {
+            if (!isEditMode) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            startX = e.clientX - rect.left;
+            startY = e.clientY - rect.top;
+            
+            if (currentTool === 'select') {
+                // Check if we clicked on a shape
+                selectedShape = null;
+                for (let i = shapes.length - 1; i >= 0; i--) {
+                    const shape = shapes[i];
+                    if (isPointInShape(startX, startY, shape)) {
+                        selectedShape = i;
+                        isDragging = true;
+                        dragOffsetX = startX - shape.x;
+                        dragOffsetY = startY - shape.y;
+                        break;
+                    }
+                }
+                
+                drawFloorPlan();
+            } else {
+                isDrawing = true;
+            }
+        }
+
+        function isPointInShape(x, y, shape) {
+            if (shape.type === 'rectangle') {
+                return x >= shape.x && x <= shape.x + shape.width && 
+                      y >= shape.y && y <= shape.y + shape.height;
+            } else if (shape.type === 'circle') {
+                const dx = x - (shape.x + shape.radius);
+                const dy = y - (shape.y + shape.radius);
+                return dx * dx + dy * dy <= shape.radius * shape.radius;
+            } else if (shape.type === 'text') {
+                return x >= shape.x && x <= shape.x + shape.width && 
+                      y >= shape.y && y <= shape.y + 20; // Approximate text height
+            }
+            return false;
+        }
+
+        function draw(e) {
+            if (!isDrawing && !isDragging) return;
+            if (!isEditMode) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const currentX = e.clientX - rect.left;
+            const currentY = e.clientY - rect.top;
+            
+            if (isDragging && selectedShape !== null) {
+                // Move the selected shape
+                const shape = shapes[selectedShape];
+                shape.x = currentX - dragOffsetX;
+                shape.y = currentY - dragOffsetY;
+                
+                drawFloorPlan();
+                return;
+            }
+            
+            if (currentTool === 'select') return;
+            
+            clearCanvas();
+            drawFloorPlan();
+            
+            // Draw preview of the current shape
+            ctx.strokeStyle = document.getElementById('shapeColor').value;
+            ctx.fillStyle = document.getElementById('shapeColor').value;
+            
+            if (currentTool === 'rectangle') {
+                ctx.beginPath();
+                ctx.rect(
+                    startX, 
+                    startY, 
+                    currentX - startX, 
+                    currentY - startY
+                );
+                ctx.stroke();
+            } else if (currentTool === 'circle') {
+                const radius = Math.sqrt(
+                    Math.pow(currentX - startX, 2) + 
+                    Math.pow(currentY - startY, 2)
+                );
+                
+                ctx.beginPath();
+                ctx.arc(startX, startY, radius, 0, Math.PI * 2);
+                ctx.stroke();
+            } else if (currentTool === 'text') {
+                ctx.beginPath();
+                ctx.rect(
+                    startX, 
+                    startY, 
+                    currentX - startX, 
+                    30
+                );
+                ctx.stroke();
+                
+                ctx.font = '14px Arial';
+                ctx.fillText('Text', startX + 5, startY + 20);
+            }
+        }
+
+        function stopDrawing(e) {
+            if (!isDrawing && !isDragging) return;
+            if (!isEditMode) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const currentX = e.clientX - rect.left;
+            const currentY = e.clientY - rect.top;
+            
+            if (isDragging && selectedShape !== null) {
+                isDragging = false;
+                return;
+            }
+            
+            if (isDrawing && currentTool !== 'select') {
+                const color = document.getElementById('shapeColor').value;
+                
+                if (currentTool === 'rectangle') {
+                    shapes.push({
+                        type: 'rectangle',
+                        x: Math.min(startX, currentX),
+                        y: Math.min(startY, currentY),
+                        width: Math.abs(currentX - startX),
+                        height: Math.abs(currentY - startY),
+                        color: color
+                    });
+                } else if (currentTool === 'circle') {
+                    const radius = Math.sqrt(
+                        Math.pow(currentX - startX, 2) + 
+                        Math.pow(currentY - startY, 2)
+                    );
+                    
+                    shapes.push({
+                        type: 'circle',
+                        x: startX - radius,
+                        y: startY - radius,
+                        radius: radius,
+                        color: color
+                    });
+                } else if (currentTool === 'text') {
+                    const label = prompt('Enter text:', 'Label');
+                    
+                    if (label) {
+                        shapes.push({
+                            type: 'text',
+                            x: Math.min(startX, currentX),
+                            y: Math.min(startY, currentY),
+                            width: Math.abs(currentX - startX),
+                            text: label,
+                            color: color
+                        });
+                    }
+                }
+                
+                drawFloorPlan();
+            }
+            
+            isDrawing = false;
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function drawFloorPlan() {
+            clearCanvas();
+            
+            // Draw all shapes
+            shapes.forEach((shape, index) => {
+                ctx.strokeStyle = shape.color;
+                ctx.fillStyle = shape.color;
+                
+                if (selectedShape === index) {
+                    ctx.strokeStyle = '#FF0000';
+                }
+                
+                if (shape.type === 'rectangle') {
+                    ctx.beginPath();
+                    ctx.rect(shape.x, shape.y, shape.width, shape.height);
+                    ctx.globalAlpha = 0.3;
+                    ctx.fill();
+                    ctx.globalAlpha = 1.0;
+                    ctx.stroke();
+                } else if (shape.type === 'circle') {
+                    ctx.beginPath();
+                    ctx.arc(
+                        shape.x + shape.radius, 
+                        shape.y + shape.radius, 
+                        shape.radius, 
+                        0, 
+                        Math.PI * 2
+                    );
+                    ctx.globalAlpha = 0.3;
+                    ctx.fill();
+                    ctx.globalAlpha = 1.0;
+                    ctx.stroke();
+                } else if (shape.type === 'text') {
+                    ctx.font = '14px Arial';
+                    ctx.fillText(shape.text, shape.x + 5, shape.y + 20);
+                }
+            });
+        }
+
+        function deleteSelected() {
+            if (selectedShape !== null) {
+                shapes.splice(selectedShape, 1);
+                selectedShape = null;
+                drawFloorPlan();
+            }
+        }
+
+        function clearFloorPlan() {
+            if (confirm('Are you sure you want to clear the entire floor plan?')) {
+                shapes = [];
+                placedProducts = [];
+                document.getElementById('placedProducts').innerHTML = '';
+                drawFloorPlan();
+            }
+        }
+
+        function onDragStart(e) {
+            e.dataTransfer.setData('productId', e.target.dataset.productId);
+            e.dataTransfer.setData('productName', e.target.dataset.productName);
+        }
+
+        function onDragOver(e) {
+            e.preventDefault(); // Allow drop
+        }
+
+        function onDrop(e) {
+            e.preventDefault();
+            
+            const productId = e.dataTransfer.getData('productId');
+            const productName = e.dataTransfer.getData('productName');
+            
+            if (!productId) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Add product to the floor plan
+            placedProducts.push({
+                productId: productId,
+                name: productName,
+                x: x,
+                y: y
+            });
+            
+            // Create visual element
+            const productElement = document.createElement('div');
+            productElement.className = 'placed-product';
+            productElement.textContent = productName;
+            productElement.style.left = x + 'px';
+            productElement.style.top = y + 'px';
+            productElement.dataset.productId = productId;
+            
+            productElement.addEventListener('mousedown', startDraggingProduct);
+            
+            document.getElementById('placedProducts').appendChild(productElement);
+        }
+
+        function startDraggingProduct(e) {
+            if (!isEditMode) return;
+            
+            draggedElement = e.target;
+            isDragging = true;
+            
+            const rect = draggedElement.getBoundingClientRect();
+            dragOffsetX = e.clientX - rect.left;
+            dragOffsetY = e.clientY - rect.top;
+            
+            // Prevent default behavior to avoid text selection
+            e.preventDefault();
+        }
+
+        function dragProduct(e) {
+            if (!isDragging || !draggedElement) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left - dragOffsetX;
+            const y = e.clientY - rect.top - dragOffsetY;
+            
+            draggedElement.style.left = x + 'px';
+            draggedElement.style.top = y + 'px';
+            
+            // Update placed products data
+            const productId = draggedElement.dataset.productId;
+            const productIndex = placedProducts.findIndex(p => p.productId === productId);
+            
+            if (productIndex !== -1) {
+                placedProducts[productIndex].x = x;
+                placedProducts[productIndex].y = y;
+            }
+        }
+
+        function stopDragging() {
+            isDragging = false;
+            draggedElement = null;
+        }
+
+        function viewFloorPlan() {
+            isEditMode = !isEditMode;
+            const button = document.querySelector('.floor-plan-actions button:last-child');
+            
+            if (isEditMode) {
+                button.textContent = 'View Mode';
+                document.querySelectorAll('.shape-button, .floor-plan-tools button').forEach(btn => {
+                    btn.disabled = false;
+                });
+            } else {
+                button.textContent = 'Edit Mode';
+                document.querySelectorAll('.shape-button, .floor-plan-tools button').forEach(btn => {
+                    if (btn !== button) {
+                        btn.disabled = true;
+                    }
+                });
+            }
+        }
     </script>
 </body>
 </html> 
