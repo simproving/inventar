@@ -983,21 +983,24 @@
         
         <div class="top-actions">
             <div class="user-select">
+                <span>Current User: </span>
                 <select id="userSelect" onchange="changeUser(this.value)">
                     <option value="">Select User</option>
-                </select>
+            </select>
             </div>
             <div class="location-select">
+                <span>Current Location: </span>
                 <select id="locationSelect" onchange="changeLocation(this.value)">
                     <option value="">Select Location</option>
                 </select>
                 <button onclick="openFloorPlan()" class="floor-plan-button">Floor Plan</button>
             </div>
             <div class="data-actions">
+                <button onclick="openScanner()">Scan Barcode</button>
                 <button onclick="openSettings()">⚙️ Settings</button>
             </div>
         </div>
-        
+
         <div class="search-container">
             <input type="text" id="searchInput" placeholder="Search items...">
         </div>
@@ -1239,7 +1242,7 @@
                             productStore.createIndex('name', 'name', { unique: false });
                         }
                         
-                        if (!db.objectStoreNames.contains('locations')) {
+                    if (!db.objectStoreNames.contains('locations')) {
                             const locationStore = db.createObjectStore('locations', { keyPath: 'id' });
                             locationStore.createIndex('name', 'name', { unique: false });
                         }
@@ -2435,7 +2438,7 @@
                 
                 await save();
                 updateTable();
-                updateHistory();
+            updateHistory();
             } catch (error) {
                 console.error('Error reverting transaction:', error);
                 alert('Error reverting transaction: ' + error.message);
@@ -2465,7 +2468,7 @@
             products.forEach(product => {
                 productInventory[product.id] = {
                     product,
-                    quantities: {},
+                        quantities: {},
                     totalQuantity: 0
                 };
             });
