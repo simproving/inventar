@@ -958,6 +958,21 @@
         .action-btn.settings-btn:hover {
             background-color: #455A64;
         }
+
+        .shape-button.delete-tool {
+            background-color: #ff4444;
+            color: white;
+        }
+        
+        .delete-cursor {
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="red" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>') 12 12, auto;
+        }
+        
+        .item-details-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -1023,14 +1038,14 @@
                     <button class="shape-button" data-tool="rectangle" onclick="selectTool('rectangle')">Rectangle</button>
                     <button class="shape-button" data-tool="circle" onclick="selectTool('circle')">Circle</button>
                     <button class="shape-button" data-tool="text" onclick="selectTool('text')">Text</button>
+                    <button class="shape-button" data-tool="delete" onclick="selectTool('delete')">Delete</button>
                     <input type="color" class="color-picker" id="shapeColor" value="#CCCCCC">
-                    <button onclick="deleteSelected()">Delete Selected</button>
                     <div style="flex-grow: 1;"></div>
                     <button onclick="clearFloorPlan()">Clear All</button>
                 </div>
                 
                 <div class="floor-plan-canvas-container">
-                    <canvas id="floorPlanCanvas" width="800" height="600"></canvas>
+                    <div id="floorPlanCanvas" style="width: 800px; height: 600px;"></div>
                     <div id="placedProducts"></div>
                 </div>
                 
@@ -1159,6 +1174,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/idb@8/build/umd.js"></script>
+    <script src="https://unpkg.com/konva@9/konva.min.js"></script>
     <script>
         let products = [];
         let inventoryItems = [];
@@ -2382,6 +2398,12 @@
         let canvas, ctx;
         let isEditMode = true;
 
+        // Konva objects
+        let stage;
+        let layer;
+        let transformer;
+        let konvaShapes = [];
+
         function openFloorPlan() {
             const modal = document.getElementById('floorPlanModal');
             modal.style.display = 'block';
@@ -2390,18 +2412,317 @@
             const locationName = locations.find(loc => loc.id === currentLocation)?.name || 'Unknown Location';
             document.getElementById('floorPlanLocationName').textContent = locationName;
             
-            // Initialize canvas
-            canvas = document.getElementById('floorPlanCanvas');
-            ctx = canvas.getContext('2d');
+            // Initialize Konva stage
+            initKonvaStage();
             
             // Load existing floor plan data
             loadFloorPlan(currentLocation);
             
             // Load products for placement
             loadProductsForPlacement();
+        }
+
+        function initKonvaStage() {
+            // Check if stage already exists
+            if (stage) {
+                stage.destroy();
+            }
+            
+            // Create Konva stage with the correct container ID
+            stage = new Konva.Stage({
+                container: 'floorPlanCanvas',
+                width: 1000,
+                height: 600
+            });
+            
+            // Create layer for all shapes
+            layer = new Konva.Layer();
+            stage.add(layer);
+            
+            // Create transformer for shape manipulation
+            transformer = new Konva.Transformer({
+                nodes: [],
+                enabledAnchors: ['top-left', 'top-right', 'bottom-left', 'bottom-right'],
+                rotateEnabled: true,
+                borderDash: [3, 3]
+            });
+            layer.add(transformer);
+            
+            // Ensure the layer is drawn
+            layer.draw();
             
             // Set up event listeners
-            setupCanvasEvents();
+            setupKonvaEvents();
+            
+            console.log("Konva stage initialized with container:", stage.container());
+        }
+        
+        function setupKonvaEvents() {
+            // Stage click handler for selection
+            stage.on('click', function(e) {
+                // Log the click for debugging
+                console.log("Stage clicked", e.target, "current tool:", currentTool);
+                
+                // If clicked on empty stage
+                if (e.target === stage) {
+                    transformer.nodes([]);
+                    selectedShape = null;
+                    layer.draw();
+                    return;
+                }
+                
+                // Handle delete tool
+                if (currentTool === 'delete') {
+                    try {
+                        const clickedShape = e.target;
+                        
+                        // Remove from transformer
+                        transformer.nodes([]);
+                        
+                        // If it's a basic shape, remove from konvaShapes
+                        const shapeIndex = konvaShapes.indexOf(clickedShape);
+                        if (shapeIndex > -1) {
+                            konvaShapes.splice(shapeIndex, 1);
+                        }
+                        
+                        // If it's a group with a product ID, remove from placedProducts
+                        if (clickedShape instanceof Konva.Group && clickedShape.attrs.productId) {
+                            const productId = clickedShape.attrs.productId;
+                            placedProducts = placedProducts.filter(p => p.productId !== productId);
+                        }
+                        
+                        // Delete the shape
+                        clickedShape.destroy();
+                        selectedShape = null;
+                        layer.draw();
+                        
+                        console.log("Shape deleted with delete tool, staying in delete mode");
+                        
+                        // No need to switch tools - stay in delete mode
+                        return;
+                    } catch (error) {
+                        console.error("Error deleting shape with delete tool:", error);
+                    }
+                }
+                
+                if (currentTool === 'select') {
+                    // Don't select when clicking on transformer
+                    if (e.target.getParent() && e.target.getParent().className === 'Transformer') {
+                        return;
+                    }
+                    
+                    // Select the shape
+                    try {
+                        transformer.nodes([e.target]);
+                        selectedShape = e.target;
+                        layer.draw();
+                    } catch (error) {
+                        console.error("Error selecting shape:", error);
+                        // Reset transformer if there's an error
+                        transformer.nodes([]);
+                        selectedShape = null;
+                        layer.draw();
+                    }
+                }
+            });
+            
+            // Handle drawing new shapes
+            stage.on('mousedown', function(e) {
+                console.log("Mouse down, current tool:", currentTool, "isEditMode:", isEditMode);
+                
+                if (currentTool === 'select' || !isEditMode) return;
+                
+                isDrawing = true;
+                const pos = stage.getPointerPosition();
+                startX = pos.x;
+                startY = pos.y;
+                
+                try {
+                    if (currentTool === 'rectangle') {
+                        console.log("Creating rectangle at", startX, startY);
+                        // Create new rectangle
+                        selectedShape = new Konva.Rect({
+                            x: startX,
+                            y: startY,
+                            width: 0,
+                            height: 0,
+                            fill: document.getElementById('shapeColor').value,
+                            stroke: '#000',
+                            strokeWidth: 1,
+                            draggable: true
+                        });
+                        
+                        // Add drag handlers to prevent transformer issues
+                        addDragHandlersToShape(selectedShape);
+                        
+                        layer.add(selectedShape);
+                        konvaShapes.push(selectedShape);
+                        layer.draw();
+                        
+                    } else if (currentTool === 'circle') {
+                        // Create new circle
+                        selectedShape = new Konva.Circle({
+                            x: startX,
+                            y: startY,
+                            radius: 0,
+                            fill: document.getElementById('shapeColor').value,
+                            stroke: '#000',
+                            strokeWidth: 1,
+                            draggable: true
+                        });
+                        
+                        // Add drag handlers to prevent transformer issues
+                        addDragHandlersToShape(selectedShape);
+                        
+                        layer.add(selectedShape);
+                        konvaShapes.push(selectedShape);
+                        layer.draw();
+                        
+                    } else if (currentTool === 'text') {
+                        // Create new text
+                        const textContent = prompt("Enter text:", "Text");
+                        if (textContent) {
+                            selectedShape = new Konva.Text({
+                                x: startX,
+                                y: startY,
+                                text: textContent,
+                                fontSize: 20,
+                                fill: document.getElementById('shapeColor').value,
+                                draggable: true
+                            });
+                            
+                            // Add drag handlers to prevent transformer issues
+                            addDragHandlersToShape(selectedShape);
+                            
+                            layer.add(selectedShape);
+                            konvaShapes.push(selectedShape);
+                            
+                            // Select the new text
+                            transformer.nodes([selectedShape]);
+                            
+                            // Switch to select tool immediately after placing text
+                            setTimeout(function() {
+                                selectTool('select');
+                            }, 10);
+                            
+                            layer.draw();
+                        }
+                        isDrawing = false;
+                    }
+                } catch (error) {
+                    console.error("Error creating shape:", error);
+                    isDrawing = false;
+                    selectedShape = null;
+                }
+            });
+            
+            // Handle mouse move for drawing
+            stage.on('mousemove', function(e) {
+                if (!isDrawing || !selectedShape) return;
+                
+                const pos = stage.getPointerPosition();
+                
+                try {
+                    if (currentTool === 'rectangle' && selectedShape instanceof Konva.Rect) {
+                        const width = pos.x - startX;
+                        const height = pos.y - startY;
+                        
+                        selectedShape.width(width);
+                        selectedShape.height(height);
+                        layer.batchDraw();
+                        
+                    } else if (currentTool === 'circle' && selectedShape instanceof Konva.Circle) {
+                        const dx = pos.x - startX;
+                        const dy = pos.y - startY;
+                        const radius = Math.sqrt(dx * dx + dy * dy);
+                        
+                        selectedShape.radius(radius);
+                        layer.batchDraw();
+                    }
+                } catch (error) {
+                    console.error("Error updating shape:", error);
+                    isDrawing = false;
+                }
+            });
+            
+            // Handle mouse up for finishing drawing
+            stage.on('mouseup', function() {
+                console.log("Mouse up detected, isDrawing:", isDrawing, "currentTool:", currentTool);
+                
+                // Only handle shape completion if we're in drawing mode
+                if (!isDrawing) return;
+                
+                // Reset drawing state first
+                isDrawing = false;
+                
+                // Handle completed shape
+                if (selectedShape) {
+                    try {
+                        // Check if we should keep the shape based on its size
+                        let shouldKeepShape = true;
+                        
+                        if (selectedShape instanceof Konva.Rect && 
+                            (Math.abs(selectedShape.width()) < 5 || Math.abs(selectedShape.height()) < 5)) {
+                            shouldKeepShape = false;
+                        } else if (selectedShape instanceof Konva.Circle && selectedShape.radius() < 5) {
+                            shouldKeepShape = false;
+                        }
+                        
+                        if (!shouldKeepShape) {
+                            // Remove shapes that are too small
+                            selectedShape.remove();
+                            const index = konvaShapes.indexOf(selectedShape);
+                            if (index > -1) {
+                                konvaShapes.splice(index, 1);
+                            }
+                            selectedShape = null;
+                        } else {
+                            // Select the shape we just drew
+                            transformer.nodes([selectedShape]);
+                        }
+                        
+                        // Switch to select tool only if we were using a drawing tool
+                        // This ensures delete tool stays active
+                        if (['rectangle', 'circle', 'text'].includes(currentTool)) {
+                            setTimeout(function() {
+                                selectTool('select');
+                            }, 10);
+                        }
+                        
+                        layer.draw();
+                    } catch (error) {
+                        console.error("Error finalizing shape:", error);
+                        // Reset state on error
+                        selectedShape = null;
+                        selectTool('select');
+                        layer.draw();
+                    }
+                } else {
+                    // Even if there's no selected shape, still switch to select tool if using drawing tools
+                    if (['rectangle', 'circle', 'text'].includes(currentTool)) {
+                        selectTool('select');
+                    }
+                }
+            });
+            
+            console.log("Konva event handlers set up");
+        }
+
+        // Helper function to add consistent drag handlers to all shapes
+        function addDragHandlersToShape(shape) {
+            shape.on('dragstart', function() {
+                // Remove the transformer during drag to prevent errors
+                transformer.nodes([]);
+            });
+            
+            shape.on('dragend', function() {
+                // Only add the transformer back if still in select mode
+                if (currentTool === 'select') {
+                    transformer.nodes([shape]);
+                    selectedShape = shape;
+                    layer.draw();
+                }
+            });
         }
 
         function closeFloorPlan() {
@@ -2413,7 +2734,7 @@
             try {
                 console.log('Loading floor plan for location:', locationId);
                 
-                // Load floor plan data from IndexedDB using the idb library
+                // Load floor plan data from IndexedDB
                 const floorPlan = await db.get('floorPlans', locationId);
                 
                 if (floorPlan) {
@@ -2421,43 +2742,157 @@
                     shapes = floorPlan.shapes || [];
                     placedProducts = floorPlan.placedProducts || [];
                     
-                    // Draw the shapes
-                    drawFloorPlan();
+                    // Clear Konva shapes
+                    konvaShapes = [];
+                    layer.destroyChildren();
                     
-                    // Place the products
+                    // Add transformer back
+                    layer.add(transformer);
+                    
+                    // Create Konva shapes from saved data
+                    shapes.forEach(shape => {
+                        let konvaShape;
+                        
+                        if (shape.type === 'rectangle') {
+                            konvaShape = new Konva.Rect({
+                                x: shape.x,
+                                y: shape.y,
+                                width: shape.width,
+                                height: shape.height,
+                                fill: shape.fill,
+                                stroke: '#000',
+                                strokeWidth: 1,
+                                draggable: true
+                            });
+                        } else if (shape.type === 'circle') {
+                            konvaShape = new Konva.Circle({
+                                x: shape.x,
+                                y: shape.y,
+                                radius: shape.radius,
+                                fill: shape.fill,
+                                stroke: '#000',
+                                strokeWidth: 1,
+                                draggable: true
+                            });
+                        } else if (shape.type === 'text') {
+                            konvaShape = new Konva.Text({
+                                x: shape.x,
+                                y: shape.y,
+                                text: shape.text,
+                                fontSize: 20,
+                                fill: shape.fill,
+                                draggable: true
+                            });
+                        }
+                        
+                        if (konvaShape) {
+                            layer.add(konvaShape);
+                            konvaShapes.push(konvaShape);
+                        }
+                    });
+                    
+                    // Add placed products
                     const placedProductsContainer = document.getElementById('placedProducts');
                     placedProductsContainer.innerHTML = '';
                     
                     placedProducts.forEach(product => {
-                        const productElement = document.createElement('div');
-                        productElement.className = 'placed-product';
-                        productElement.textContent = product.name;
-                        productElement.style.left = product.x + 'px';
-                        productElement.style.top = product.y + 'px';
-                        productElement.dataset.productId = product.productId;
+                        const productText = new Konva.Text({
+                            x: product.x,
+                            y: product.y,
+                            text: product.name,
+                            fontSize: 14,
+                            padding: 5,
+                            fill: '#ffffff',
+                            draggable: true,
+                            id: 'product-' + product.productId
+                        });
                         
-                        productElement.addEventListener('mousedown', startDraggingProduct);
+                        const productBox = new Konva.Rect({
+                            x: product.x,
+                            y: product.y,
+                            width: productText.width(),
+                            height: productText.height(),
+                            fill: '#2196F3',
+                            opacity: 0.7,
+                            cornerRadius: 3,
+                            draggable: true
+                        });
                         
-                        placedProductsContainer.appendChild(productElement);
+                        // Group product text and box
+                        const productGroup = new Konva.Group({
+                            draggable: true,
+                            productId: product.productId
+                        });
+                        
+                        productGroup.add(productBox);
+                        productGroup.add(productText);
+                        layer.add(productGroup);
                     });
+                    
+                    layer.draw();
                 } else {
                     console.log('No floor plan found for location:', locationId);
                     // Create empty floor plan
                     shapes = [];
                     placedProducts = [];
-                    clearCanvas();
+                    layer.draw();
                 }
             } catch (error) {
                 console.error('Error loading floor plan:', error);
                 alert('Error loading floor plan: ' + error.message);
                 shapes = [];
                 placedProducts = [];
-                clearCanvas();
+                layer.draw();
             }
         }
 
         async function saveFloorPlan() {
             try {
+                // Export Konva shapes to simple objects
+                shapes = konvaShapes.map(shape => {
+                    const baseShape = {
+                        x: shape.x(),
+                        y: shape.y(),
+                        fill: shape.fill()
+                    };
+                    
+                    if (shape instanceof Konva.Rect) {
+                        return {
+                            ...baseShape,
+                            type: 'rectangle',
+                            width: shape.width(),
+                            height: shape.height()
+                        };
+                    } else if (shape instanceof Konva.Circle) {
+                        return {
+                            ...baseShape,
+                            type: 'circle',
+                            radius: shape.radius()
+                        };
+                    } else if (shape instanceof Konva.Text) {
+                        return {
+                            ...baseShape,
+                            type: 'text',
+                            text: shape.text()
+                        };
+                    }
+                    
+                    return null;
+                }).filter(Boolean);
+                
+                // Get product groups and export their data
+                placedProducts = [];
+                layer.find('.Group').forEach(group => {
+                    if (group.attrs.productId) {
+                        placedProducts.push({
+                            productId: group.attrs.productId,
+                            name: group.findOne('Text').text(),
+                            x: group.x(),
+                            y: group.y()
+                        });
+                    }
+                });
+                
                 // Create floor plan object
                 const floorPlan = {
                     locationId: currentLocation,
@@ -2467,7 +2902,7 @@
                 
                 console.log('Saving floor plan:', floorPlan);
                 
-                // Use the idb library's put method directly
+                // Save to IndexedDB
                 await db.put('floorPlans', floorPlan);
                 
                 // Verify the save by reading it back
@@ -2484,16 +2919,84 @@
             }
         }
 
-        function setupCanvasEvents() {
-            canvas.addEventListener('mousedown', startDrawing);
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('mouseup', stopDrawing);
-            canvas.addEventListener('mouseout', stopDrawing);
+        function selectTool(tool) {
+            currentTool = tool;
             
-            // Set up product dragging events
-            const placedProductsContainer = document.getElementById('placedProducts');
-            placedProductsContainer.addEventListener('mouseup', stopDragging);
-            placedProductsContainer.addEventListener('mousemove', dragProduct);
+            console.log("Tool selected:", tool);
+            
+            // Update active button and canvas cursor
+            document.querySelectorAll('.shape-button').forEach(button => {
+                if (button.dataset.tool === tool) {
+                    button.classList.add('active');
+                } else {
+                    button.classList.remove('active');
+                }
+                
+                // Reset any special class
+                button.classList.remove('delete-tool');
+            });
+            
+            // Set special styling for delete tool
+            if (tool === 'delete') {
+                document.querySelector('[data-tool="delete"]').classList.add('delete-tool');
+                stage.container().classList.add('delete-cursor');
+            } else {
+                stage.container().classList.remove('delete-cursor');
+            }
+            
+            // Clear selection when changing tools (except for select tool)
+            if (tool !== 'select' && transformer) {
+                transformer.nodes([]);
+                selectedShape = null;
+                layer.draw();
+            }
+        }
+
+        function deleteSelected() {
+            if (!selectedShape) return;
+            
+            try {
+                // First remove from transformer to prevent errors
+                transformer.nodes([]);
+                
+                // Remove from konvaShapes array if it's a basic shape
+                const index = konvaShapes.indexOf(selectedShape);
+                if (index > -1) {
+                    konvaShapes.splice(index, 1);
+                }
+                
+                // If it's a product group, remove from placedProducts
+                if (selectedShape instanceof Konva.Group && selectedShape.attrs.productId) {
+                    const productId = selectedShape.attrs.productId;
+                    placedProducts = placedProducts.filter(p => p.productId !== productId);
+                }
+                
+                // Remove the shape from the layer
+                selectedShape.destroy();
+                selectedShape = null;
+                
+                // Redraw the layer
+                layer.draw();
+                
+                console.log("Shape deleted successfully");
+            } catch (error) {
+                console.error("Error deleting shape:", error);
+                // Reset the state
+                transformer.nodes([]);
+                selectedShape = null;
+                layer.draw();
+            }
+        }
+
+        function clearFloorPlan() {
+            if (confirm('Are you sure you want to clear the entire floor plan?')) {
+                konvaShapes = [];
+                layer.destroyChildren();
+                layer.add(transformer);
+                layer.draw();
+                shapes = [];
+                placedProducts = [];
+            }
         }
 
         function loadProductsForPlacement() {
@@ -2502,15 +3005,16 @@
             
             // Get products with inventory in this location
             const productsInLocation = inventoryItems
-                .filter(item => item.locationId === currentLocation)
+                .filter(item => item.locationId === currentLocation && item.quantity > 0)
                 .map(item => {
                     const product = products.find(p => p.id === item.productId);
-                    return {
+                    return product ? {
                         id: product.id,
                         name: product.name,
                         quantity: item.quantity
-                    };
-                });
+                    } : null;
+                })
+                .filter(Boolean);
             
             productsInLocation.forEach(product => {
                 const productItem = document.createElement('div');
@@ -2533,338 +3037,158 @@
             canvasContainer.addEventListener('dragover', onDragOver);
             canvasContainer.addEventListener('drop', onDrop);
         }
-
-        function selectTool(tool) {
-            currentTool = tool;
-            
-            // Update active button
-            document.querySelectorAll('.shape-button').forEach(button => {
-                if (button.dataset.tool === tool) {
-                    button.classList.add('active');
-                } else {
-                    button.classList.remove('active');
-                }
-            });
-        }
-
-        function startDrawing(e) {
-            if (!isEditMode) return;
-            
-            const rect = canvas.getBoundingClientRect();
-            startX = e.clientX - rect.left;
-            startY = e.clientY - rect.top;
-            
-            if (currentTool === 'select') {
-                // Check if we clicked on a shape
-                selectedShape = null;
-                for (let i = shapes.length - 1; i >= 0; i--) {
-                    const shape = shapes[i];
-                    if (isPointInShape(startX, startY, shape)) {
-                        selectedShape = i;
-                        isDragging = true;
-                        dragOffsetX = startX - shape.x;
-                        dragOffsetY = startY - shape.y;
-                        break;
-                    }
-                }
-                
-                drawFloorPlan();
-            } else {
-                isDrawing = true;
-            }
-        }
-
-        function isPointInShape(x, y, shape) {
-            if (shape.type === 'rectangle') {
-                return x >= shape.x && x <= shape.x + shape.width && 
-                      y >= shape.y && y <= shape.y + shape.height;
-            } else if (shape.type === 'circle') {
-                const dx = x - (shape.x + shape.radius);
-                const dy = y - (shape.y + shape.radius);
-                return dx * dx + dy * dy <= shape.radius * shape.radius;
-            } else if (shape.type === 'text') {
-                return x >= shape.x && x <= shape.x + shape.width && 
-                      y >= shape.y && y <= shape.y + 20; // Approximate text height
-            }
-            return false;
-        }
-
-        function draw(e) {
-            if (!isDrawing && !isDragging) return;
-            if (!isEditMode) return;
-            
-            const rect = canvas.getBoundingClientRect();
-            const currentX = e.clientX - rect.left;
-            const currentY = e.clientY - rect.top;
-            
-            if (isDragging && selectedShape !== null) {
-                // Move the selected shape
-                const shape = shapes[selectedShape];
-                shape.x = currentX - dragOffsetX;
-                shape.y = currentY - dragOffsetY;
-                
-                drawFloorPlan();
-                return;
-            }
-            
-            if (currentTool === 'select') return;
-            
-            clearCanvas();
-            drawFloorPlan();
-            
-            // Draw preview of the current shape
-            ctx.strokeStyle = document.getElementById('shapeColor').value;
-            ctx.fillStyle = document.getElementById('shapeColor').value;
-            
-            if (currentTool === 'rectangle') {
-                ctx.beginPath();
-                ctx.rect(
-                    startX, 
-                    startY, 
-                    currentX - startX, 
-                    currentY - startY
-                );
-                ctx.stroke();
-            } else if (currentTool === 'circle') {
-                const radius = Math.sqrt(
-                    Math.pow(currentX - startX, 2) + 
-                    Math.pow(currentY - startY, 2)
-                );
-                
-                ctx.beginPath();
-                ctx.arc(startX, startY, radius, 0, Math.PI * 2);
-                ctx.stroke();
-            } else if (currentTool === 'text') {
-                ctx.beginPath();
-                ctx.rect(
-                    startX, 
-                    startY, 
-                    currentX - startX, 
-                    30
-                );
-                ctx.stroke();
-                
-                ctx.font = '14px Arial';
-                ctx.fillText('Text', startX + 5, startY + 20);
-            }
-        }
-
-        function stopDrawing(e) {
-            if (!isDrawing && !isDragging) return;
-            if (!isEditMode) return;
-            
-            const rect = canvas.getBoundingClientRect();
-            const currentX = e.clientX - rect.left;
-            const currentY = e.clientY - rect.top;
-            
-            if (isDragging && selectedShape !== null) {
-                isDragging = false;
-                return;
-            }
-            
-            if (isDrawing && currentTool !== 'select') {
-                const color = document.getElementById('shapeColor').value;
-                
-                if (currentTool === 'rectangle') {
-                    shapes.push({
-                        type: 'rectangle',
-                        x: Math.min(startX, currentX),
-                        y: Math.min(startY, currentY),
-                        width: Math.abs(currentX - startX),
-                        height: Math.abs(currentY - startY),
-                        color: color
-                    });
-                } else if (currentTool === 'circle') {
-                    const radius = Math.sqrt(
-                        Math.pow(currentX - startX, 2) + 
-                        Math.pow(currentY - startY, 2)
-                    );
-                    
-                    shapes.push({
-                        type: 'circle',
-                        x: startX - radius,
-                        y: startY - radius,
-                        radius: radius,
-                        color: color
-                    });
-                } else if (currentTool === 'text') {
-                    const label = prompt('Enter text:', 'Label');
-                    
-                    if (label) {
-                        shapes.push({
-                            type: 'text',
-                            x: Math.min(startX, currentX),
-                            y: Math.min(startY, currentY),
-                            width: Math.abs(currentX - startX),
-                            text: label,
-                            color: color
-                        });
-                    }
-                }
-                
-                drawFloorPlan();
-            }
-            
-            isDrawing = false;
-        }
-
-        function clearCanvas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
-
-        function drawFloorPlan() {
-            clearCanvas();
-            
-            // Draw all shapes
-            shapes.forEach((shape, index) => {
-                ctx.strokeStyle = shape.color;
-                ctx.fillStyle = shape.color;
-                
-                if (selectedShape === index) {
-                    ctx.strokeStyle = '#FF0000';
-                }
-                
-                if (shape.type === 'rectangle') {
-                    ctx.beginPath();
-                    ctx.rect(shape.x, shape.y, shape.width, shape.height);
-                    ctx.globalAlpha = 0.3;
-                    ctx.fill();
-                    ctx.globalAlpha = 1.0;
-                    ctx.stroke();
-                } else if (shape.type === 'circle') {
-                    ctx.beginPath();
-                    ctx.arc(
-                        shape.x + shape.radius, 
-                        shape.y + shape.radius, 
-                        shape.radius, 
-                        0, 
-                        Math.PI * 2
-                    );
-                    ctx.globalAlpha = 0.3;
-                    ctx.fill();
-                    ctx.globalAlpha = 1.0;
-                    ctx.stroke();
-                } else if (shape.type === 'text') {
-                    ctx.font = '14px Arial';
-                    ctx.fillText(shape.text, shape.x + 5, shape.y + 20);
-                }
-            });
-        }
-
-        function deleteSelected() {
-            if (selectedShape !== null) {
-                shapes.splice(selectedShape, 1);
-                selectedShape = null;
-                drawFloorPlan();
-            }
-        }
-
-        function clearFloorPlan() {
-            if (confirm('Are you sure you want to clear the entire floor plan?')) {
-                shapes = [];
-                placedProducts = [];
-                document.getElementById('placedProducts').innerHTML = '';
-                drawFloorPlan();
-            }
-        }
-
+        
         function onDragStart(e) {
             e.dataTransfer.setData('productId', e.target.dataset.productId);
             e.dataTransfer.setData('productName', e.target.dataset.productName);
         }
-
+        
         function onDragOver(e) {
-            e.preventDefault(); // Allow drop
+            e.preventDefault();
         }
-
+        
         function onDrop(e) {
             e.preventDefault();
             
             const productId = e.dataTransfer.getData('productId');
             const productName = e.dataTransfer.getData('productName');
             
-            if (!productId) return;
+            if (!productId || !productName) {
+                console.error("Missing product data in drop event");
+                return;
+            }
             
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            
-            // Add product to the floor plan
-            placedProducts.push({
-                productId: productId,
-                name: productName,
-                x: x,
-                y: y
-            });
-            
-            // Create visual element
-            const productElement = document.createElement('div');
-            productElement.className = 'placed-product';
-            productElement.textContent = productName;
-            productElement.style.left = x + 'px';
-            productElement.style.top = y + 'px';
-            productElement.dataset.productId = productId;
-            
-            productElement.addEventListener('mousedown', startDraggingProduct);
-            
-            document.getElementById('placedProducts').appendChild(productElement);
-        }
-
-        function startDraggingProduct(e) {
-            if (!isEditMode) return;
-            
-            draggedElement = e.target;
-            isDragging = true;
-            
-            const rect = draggedElement.getBoundingClientRect();
-            dragOffsetX = e.clientX - rect.left;
-            dragOffsetY = e.clientY - rect.top;
-            
-            // Prevent default behavior to avoid text selection
-            e.preventDefault();
-        }
-
-        function dragProduct(e) {
-            if (!isDragging || !draggedElement) return;
-            
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left - dragOffsetX;
-            const y = e.clientY - rect.top - dragOffsetY;
-            
-            draggedElement.style.left = x + 'px';
-            draggedElement.style.top = y + 'px';
-            
-            // Update placed products data
-            const productId = draggedElement.dataset.productId;
-            const productIndex = placedProducts.findIndex(p => p.productId === productId);
-            
-            if (productIndex !== -1) {
-                placedProducts[productIndex].x = x;
-                placedProducts[productIndex].y = y;
+            try {
+                // Get position relative to the canvas container
+                const rect = stage.container().getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                console.log("Dropping product at position:", x, y);
+                
+                // Create product text
+                const productText = new Konva.Text({
+                    x: 0,
+                    y: 0,
+                    text: productName,
+                    fontSize: 14,
+                    padding: 5,
+                    fill: '#ffffff'
+                });
+                
+                // Create product background
+                const productBox = new Konva.Rect({
+                    x: 0,
+                    y: 0,
+                    width: productText.width(),
+                    height: productText.height(),
+                    fill: '#2196F3',
+                    opacity: 0.7,
+                    cornerRadius: 3
+                });
+                
+                // Group product text and box
+                const productGroup = new Konva.Group({
+                    x: x,
+                    y: y,
+                    draggable: true,
+                    name: 'productGroup',
+                    productId: productId
+                });
+                
+                productGroup.add(productBox);
+                productGroup.add(productText);
+                
+                // Add custom drag events to prevent transformer errors
+                productGroup.on('dragstart', function() {
+                    // Remove the transformer during drag to prevent errors
+                    transformer.nodes([]);
+                });
+                
+                productGroup.on('dragend', function() {
+                    // Add the transformer back after drag
+                    transformer.nodes([productGroup]);
+                    layer.draw();
+                    
+                    // Update product position in placedProducts array
+                    const product = placedProducts.find(p => p.productId === productId);
+                    if (product) {
+                        product.x = productGroup.x();
+                        product.y = productGroup.y();
+                    }
+                });
+                
+                layer.add(productGroup);
+                
+                // Select the newly created product
+                transformer.nodes([productGroup]);
+                selectedShape = productGroup;
+                
+                // Only switch to select tool if we're not in delete mode
+                if (currentTool !== 'delete') {
+                    // Automatically switch to select tool
+                    selectTool('select');
+                }
+                
+                layer.draw();
+                
+                console.log("Product placed:", productName, "at", x, y);
+                
+                // Add to placedProducts array
+                placedProducts.push({
+                    productId: productId,
+                    name: productName,
+                    x: x,
+                    y: y
+                });
+            } catch (error) {
+                console.error("Error placing product:", error);
             }
         }
 
-        function stopDragging() {
-            isDragging = false;
-            draggedElement = null;
-        }
-
         function viewFloorPlan() {
+            // Toggle edit mode
             isEditMode = !isEditMode;
-            const button = document.querySelector('.floor-plan-actions button:last-child');
             
-            if (isEditMode) {
-                button.textContent = 'View Mode';
-                document.querySelectorAll('.shape-button, .floor-plan-tools button').forEach(btn => {
-                    btn.disabled = false;
-                });
-            } else {
-                button.textContent = 'Edit Mode';
-                document.querySelectorAll('.shape-button, .floor-plan-tools button').forEach(btn => {
-                    if (btn !== button) {
-                        btn.disabled = true;
+            // Update UI
+            const editElements = document.querySelectorAll('.floor-plan-tools, .product-placement-panel');
+            editElements.forEach(el => {
+                el.style.display = isEditMode ? 'flex' : 'none';
+            });
+            
+            document.querySelector('.floor-plan-actions').innerHTML = isEditMode
+                ? `<button onclick="saveFloorPlan()">Save Floor Plan</button>
+                   <button onclick="viewFloorPlan()">View Mode</button>`
+                : `<button onclick="viewFloorPlan()">Edit Mode</button>
+                   <button onclick="closeFloorPlan()">Close</button>`;
+            
+            try {
+                // Remove transformer when switching to view mode
+                if (!isEditMode) {
+                    transformer.nodes([]);
+                    selectedShape = null;
+                }
+                
+                // Update Konva shapes and product groups
+                konvaShapes.forEach(shape => {
+                    if (shape && typeof shape.draggable === 'function') {
+                        shape.draggable(isEditMode);
                     }
                 });
+                
+                // Update product groups
+                layer.find('.Group').forEach(group => {
+                    if (group && typeof group.draggable === 'function') {
+                        group.draggable(isEditMode);
+                    }
+                });
+                
+                // Toggle transformer visibility
+                transformer.visible(isEditMode);
+                
+                layer.draw();
+            } catch (error) {
+                console.error("Error updating view mode:", error);
             }
         }
 
