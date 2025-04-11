@@ -985,13 +985,11 @@
             <div class="user-select">
                 <span>Current User: </span>
                 <select id="userSelect" onchange="changeUser(this.value)">
-                    <option value="">Select User</option>
-            </select>
+                </select>
             </div>
             <div class="location-select">
                 <span>Current Location: </span>
                 <select id="locationSelect" onchange="changeLocation(this.value)">
-                    <option value="">Select Location</option>
                 </select>
                 <button onclick="openFloorPlan()" class="floor-plan-button">Floor Plan</button>
             </div>
@@ -1495,7 +1493,7 @@
 
         function updateLocationSelect() {
             const select = document.getElementById('locationSelect');
-            select.innerHTML = '<option value="">Select Location</option>';
+            select.innerHTML = '';
             
             locations.forEach(location => {
                 const option = document.createElement('option');
@@ -1506,9 +1504,20 @@
                 }
                 select.appendChild(option);
             });
+
+            // If no location is selected, select the first one
+            if (!currentLocation && locations.length > 0) {
+                currentLocation = locations[0].id;
+                select.value = currentLocation;
+            }
         }
 
         function changeLocation(selectedLocationId) {
+            if (!selectedLocationId && locations.length > 0) {
+                // If somehow no location is selected, select the first one
+                selectedLocationId = locations[0].id;
+                document.getElementById('locationSelect').value = selectedLocationId;
+            }
             currentLocation = selectedLocationId;
             updateTable();
         }
@@ -3097,7 +3106,13 @@
         }
 
         function changeUser(selectedUserId) {
-            currentUser = selectedUserId;
+            if (!selectedUserId && users.length > 0) {
+                // If somehow no user is selected, select the first one
+                selectedUserId = users[0].id;
+                document.getElementById('userSelect').value = selectedUserId;
+            }
+            currentUserId = selectedUserId;
+            currentUser = users.find(user => user.id === selectedUserId)?.name || '';
             updateTable();
         }
         
@@ -3221,21 +3236,23 @@
                 
                 // Only update the user selector if it exists
                 if (userSelect) {
-                    userSelect.innerHTML = '<option value="">Select User</option>';
+                    userSelect.innerHTML = '';
                     users.forEach(user => {
                         const option = document.createElement('option');
                         option.value = user.id;
                         option.textContent = user.name;
-                        if (user.id === currentUser) {
+                        if (user.id === currentUserId) {
                             option.selected = true;
                         }
                         userSelect.appendChild(option);
                     });
-                }
-                
-                // Update current user if not set
-                if (!currentUser && users.length > 0) {
-                    currentUser = users[0].id;
+
+                    // If no user is selected, select the first one
+                    if (!currentUserId && users.length > 0) {
+                        currentUserId = users[0].id;
+                        currentUser = users[0].name;
+                        userSelect.value = currentUserId;
+                    }
                 }
                 
                 // Update the table to reflect any user changes
