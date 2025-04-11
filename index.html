@@ -2419,6 +2419,23 @@
             const locationName = locations.find(loc => loc.id === currentLocation)?.name || 'Unknown Location';
             document.getElementById('floorPlanLocationName').textContent = locationName;
             
+            // Reset state
+            selectedShape = null;
+            isDrawing = false;
+            
+            // Always start in select mode
+            currentTool = 'select';
+            
+            // Update UI to show select as active
+            document.querySelectorAll('.shape-button').forEach(button => {
+                if (button.dataset.tool === 'select') {
+                    button.classList.add('active');
+                } else {
+                    button.classList.remove('active');
+                    button.classList.remove('delete-tool');
+                }
+            });
+            
             // Initialize Konva stage
             initKonvaStage();
             
@@ -2427,6 +2444,8 @@
             
             // Load products for placement
             loadProductsForPlacement();
+            
+            console.log('Floor plan opened, stage initialized');
         }
 
         function initKonvaStage() {
@@ -2465,6 +2484,12 @@
         }
         
         function setupKonvaEvents() {
+            // Clear any existing event listeners
+            stage.off('click');
+            stage.off('mousedown');
+            stage.off('mousemove');
+            stage.off('mouseup');
+            
             // Stage click handler for selection
             stage.on('click', function(e) {
                 // Log the click for debugging
@@ -2482,6 +2507,7 @@
                 if (currentTool === 'delete') {
                     try {
                         const clickedShape = e.target;
+                        console.log("Attempting to delete shape:", clickedShape);
                         
                         // Remove from transformer
                         transformer.nodes([]);
@@ -2520,6 +2546,7 @@
                     
                     // Select the shape
                     try {
+                        console.log("Selecting shape:", e.target);
                         transformer.nodes([e.target]);
                         selectedShape = e.target;
                         layer.draw();
@@ -2717,12 +2744,18 @@
 
         // Helper function to add consistent drag handlers to all shapes
         function addDragHandlersToShape(shape) {
+            // Clear any existing handlers to prevent duplicates
+            shape.off('dragstart');
+            shape.off('dragend');
+            
             shape.on('dragstart', function() {
+                console.log('Drag started on shape', shape);
                 // Remove the transformer during drag to prevent errors
                 transformer.nodes([]);
             });
             
             shape.on('dragend', function() {
+                console.log('Drag ended on shape', shape, 'current tool:', currentTool);
                 // Only add the transformer back if still in select mode
                 if (currentTool === 'select') {
                     transformer.nodes([shape]);
@@ -2730,6 +2763,9 @@
                     layer.draw();
                 }
             });
+            
+            // Make sure the shape is clickable
+            shape.listening(true);
         }
 
         function closeFloorPlan() {
@@ -3106,16 +3142,27 @@
                 productGroup.add(productBox);
                 productGroup.add(productText);
                 
+                // Make sure the group is recognized as a shape for selection and dragging
+                productGroup.listening(true);
+                
                 // Add custom drag events to prevent transformer errors
+                productGroup.off('dragstart'); // Clear any existing handlers
+                productGroup.off('dragend');
+                
                 productGroup.on('dragstart', function() {
+                    console.log('Product drag started');
                     // Remove the transformer during drag to prevent errors
                     transformer.nodes([]);
                 });
                 
                 productGroup.on('dragend', function() {
-                    // Add the transformer back after drag
-                    transformer.nodes([productGroup]);
-                    layer.draw();
+                    console.log('Product drag ended, current tool:', currentTool);
+                    
+                    // Only add the transformer back if in select mode
+                    if (currentTool === 'select') {
+                        transformer.nodes([productGroup]);
+                        selectedShape = productGroup;
+                    }
                     
                     // Update product position in placedProducts array
                     const product = placedProducts.find(p => p.productId === productId);
@@ -3123,17 +3170,19 @@
                         product.x = productGroup.x();
                         product.y = productGroup.y();
                     }
+                    
+                    layer.draw();
                 });
                 
+                // Add to layer and draw
                 layer.add(productGroup);
                 
-                // Select the newly created product
-                transformer.nodes([productGroup]);
-                selectedShape = productGroup;
-                
-                // Only switch to select tool if we're not in delete mode
-                if (currentTool !== 'delete') {
-                    // Automatically switch to select tool
+                // Select the newly created product if in select mode
+                if (currentTool === 'select') {
+                    transformer.nodes([productGroup]);
+                    selectedShape = productGroup;
+                } else if (currentTool !== 'delete') {
+                    // Switch to select tool if not in delete mode
                     selectTool('select');
                 }
                 
