@@ -68,9 +68,6 @@ The application should provide a comprehensive solution for tracking products ac
 
 ## Implementation Details
 
-### Required Components
-
-
 ### Database Schema
 1. Products table (id, name, price, optional: comments)
 2. Locations table (id, name)
