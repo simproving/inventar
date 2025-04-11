@@ -246,17 +246,6 @@
             background-color: var(--button-secondary);
         }
 
-        .quantity-btn {
-            padding: 4px 8px;
-            margin: 0 4px;
-            background-color: var(--button-secondary);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
         .quantity-btn:hover {
             background-color: var(--button-secondary-hover);
         }
@@ -1840,35 +1829,6 @@
             } else {
                 details.classList.add('show');
                 button.textContent = '▲';
-            }
-        }
-
-        async function updateItemDetails(productId) {
-            const product = products.find(p => p.id === productId);
-            if (!product) return;
-
-            const aliasesText = document.getElementById(`aliases-${productId}`).value;
-            const newAliases = aliasesText.split('\n').filter(alias => alias.trim());
-            const newComments = document.getElementById(`comments-${productId}`).value;
-
-            if (JSON.stringify(product.aliases) !== JSON.stringify(newAliases) || product.comments !== newComments) {
-                const oldAliases = product.aliases || [];
-                const oldComments = product.comments || '';
-                
-                product.aliases = newAliases;
-                product.comments = newComments;
-
-                await addToHistory({
-                    type: 'update_details',
-                    productId: product.id,
-                    productName: product.name,
-                    oldValue: { aliases: oldAliases, comments: oldComments },
-                    newValue: { aliases: newAliases, comments: newComments },
-                    timestamp: new Date().toISOString()
-                });
-                
-                await save();
-                updateTable();
             }
         }
 
