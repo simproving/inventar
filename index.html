@@ -240,16 +240,10 @@
             border-bottom: 1px solid var(--history-item-border);
         }
 
-        .history-item button {
-            background-color: var(--button-danger);
-        }
-
-        .history-item button:hover {
-            background-color: var(--button-danger-hover);
-        }
-
-        .commit-section {
-            display: none;
+        .quantity-btn {
+            padding: 4px 8px;
+            margin: 0 4px;
+            background-color: var(--button-secondary);
         }
 
         .quantity-btn {
@@ -1957,62 +1951,6 @@
             }
         }
 
-        // Function to change quantity for a specific location
-        async function changeSpecificLocationQuantity(productId, locationId, change) {
-            const product = products.find(item => item.id === productId);
-            if (!product) return;
-            
-            // Find inventory entry for this product and the specified location
-            let inventoryEntry = inventoryItems.find(item => 
-                item.productId === productId && item.locationId === locationId
-            );
-            
-            if (inventoryEntry) {
-                // Update existing entry
-                const oldQuantity = inventoryEntry.quantity;
-                const newQuantity = oldQuantity + change;
-                
-                if (newQuantity >= 0) {
-                    inventoryEntry.quantity = newQuantity;
-                    
-                    await addToHistory({
-                        type: 'update_quantity',
-                        productId: product.id,
-                        productName: product.name,
-                        locationId: locationId,
-                        oldQuantity,
-                        newQuantity,
-                        timestamp: new Date().toISOString()
-                    });
-                    
-                    await save();
-                    updateTable();
-                }
-            } else if (change > 0) {
-                // Create new inventory entry
-                inventoryEntry = {
-                    id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
-                    productId: product.id,
-                    locationId: locationId,
-                    quantity: change
-                };
-                
-                inventoryItems.push(inventoryEntry);
-                
-                await addToHistory({
-                    type: 'add_inventory',
-                    productId: product.id,
-                    productName: product.name,
-                    locationId: locationId,
-                    quantity: change,
-                    timestamp: new Date().toISOString()
-                });
-                
-                await save();
-                updateTable();
-            }
-        }
-
         // Allow direct editing of location quantity by clicking on the value
         async function editLocationQuantity(productId, locationId, element) {
             const product = products.find(p => p.id === productId);
@@ -2234,20 +2172,14 @@
             
             // Filter transactions if search term is provided
             const filteredTransactions = searchTerm ? 
-                sortedTransactions.filter(transaction => {
-                    // Check for product name match in the transaction
-                    const productNameMatch = transaction.productName && 
-                        transaction.productName.toLowerCase().includes(searchTerm);
-                    
-                    // Check for product id match (if it references a product that matches search)
-                    const productIdMatch = transaction.productId && 
-                        products.some(p => p.id === transaction.productId && 
-                            (p.name.toLowerCase().includes(searchTerm) || 
-                             (Array.isArray(p.aliases) && p.aliases.some(alias => 
-                                alias.toLowerCase().includes(searchTerm)))));
-                    
-                    return productNameMatch || productIdMatch;
-                }) : 
+                sortedTransactions.filter(transaction => 
+                    (transaction.productName && transaction.productName.toLowerCase().includes(searchTerm)) || 
+                    (transaction.productId && products.some(p => 
+                        p.id === transaction.productId && 
+                        (p.name.toLowerCase().includes(searchTerm) || 
+                         (Array.isArray(p.aliases) && p.aliases.some(alias => alias.toLowerCase().includes(searchTerm))))
+                    ))
+                ) : 
                 sortedTransactions;
             
             filteredTransactions.forEach((transaction, index) => {
@@ -2304,7 +2236,6 @@
 
                 div.innerHTML = `
                     <span>${changeText} - ${formatDate(transaction.timestamp)}</span>
-                    <button onclick="revertChange(${sortedTransactions.indexOf(transaction)})">Revert</button>
                 `;
                 historyList.appendChild(div);
             });
@@ -2325,133 +2256,6 @@
             transactions.push(change);
             await save();
             updateHistory();
-        }
-
-        async function revertChange(index) {
-            const sortedTransactions = [...transactions].sort((a, b) => 
-                new Date(b.timestamp) - new Date(a.timestamp)
-            );
-            
-            const transaction = sortedTransactions[index];
-            if (!transaction) return;
-            
-            const actualIndex = transactions.findIndex(t => t.timestamp === transaction.timestamp);
-            if (actualIndex === -1) return;
-            
-            try {
-                switch (transaction.type) {
-                    case 'add_inventory':
-                        // Remove the inventory entry
-                        inventoryItems = inventoryItems.filter(item => 
-                            !(item.productId === transaction.productId && 
-                              item.locationId === transaction.locationId)
-                        );
-                        break;
-                        
-                    case 'delete_inventory':
-                        // Add the inventory entry back
-                        inventoryItems.push({
-                            id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
-                            productId: transaction.productId,
-                            locationId: transaction.locationId,
-                            quantity: transaction.quantity
-                        });
-                        break;
-                        
-                    case 'delete_product':
-                        // Check if product exists (might have been recreated)
-                        if (!products.some(p => p.id === transaction.productId)) {
-                            // We need more details than what's in the transaction
-                            // For simplicity, we'll just create a basic product
-                            products.push({
-                                id: transaction.productId,
-                                name: transaction.productName,
-                                price: 0, // Default price
-                                comments: '',
-                                aliases: []
-                            });
-                        }
-                        break;
-                        
-                    case 'update_quantity':
-                        // Find the inventory entry
-                        const quantityEntry = inventoryItems.find(item => 
-                            item.productId === transaction.productId && 
-                            item.locationId === transaction.locationId
-                        );
-                        
-                        if (quantityEntry) {
-                            quantityEntry.quantity = transaction.oldQuantity;
-                        } else if (transaction.oldQuantity > 0) {
-                            // Create new entry with old quantity
-                            inventoryItems.push({
-                                id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
-                                productId: transaction.productId,
-                                locationId: transaction.locationId,
-                                quantity: transaction.oldQuantity
-                            });
-                        }
-                        break;
-                        
-                    case 'edit_product':
-                        // Find the product
-                        const editProduct = products.find(p => p.id === transaction.productId);
-                        if (editProduct) {
-                            editProduct[transaction.field] = transaction.oldValue;
-                        }
-                        break;
-                        
-                    case 'update_details':
-                        // Find the product
-                        const detailsProduct = products.find(p => p.id === transaction.productId);
-                        if (detailsProduct) {
-                            detailsProduct.aliases = transaction.oldValue.aliases;
-                            detailsProduct.comments = transaction.oldValue.comments;
-                        }
-                        break;
-                        
-                    case 'update_comments':
-                        // Find the product
-                        const commentsProduct = products.find(p => p.id === transaction.productId);
-                        if (commentsProduct) {
-                            commentsProduct.comments = transaction.oldValue;
-                        }
-                        break;
-                        
-                    case 'add_location':
-                        // Remove the location
-                        locations = locations.filter(loc => loc.id !== transaction.location.id);
-                        
-                        // Remove any inventory for this location
-                        inventoryItems = inventoryItems.filter(item => 
-                            item.locationId !== transaction.location.id
-                        );
-                        break;
-                        
-                    case 'delete_location':
-                        // Add the location back
-                        locations.push(transaction.location);
-                        break;
-                        
-                    case 'rename_location':
-                        // Find the location and change the name back
-                        const renameLocation = locations.find(loc => loc.id === transaction.locationId);
-                        if (renameLocation) {
-                            renameLocation.name = transaction.oldName;
-                        }
-                        break;
-                }
-                
-                // Remove the transaction from history
-                transactions.splice(actualIndex, 1);
-                
-                await save();
-                updateTable();
-            updateHistory();
-            } catch (error) {
-                console.error('Error reverting transaction:', error);
-                alert('Error reverting transaction: ' + error.message);
-            }
         }
 
         document.getElementById('searchInput').addEventListener('input', function() {
@@ -2606,7 +2410,6 @@
         });
 
         // Floor Plan functionality
-        let floorPlanData = {};
         let currentTool = 'select';
         let shapes = [];
         let selectedShape = null;
