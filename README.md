@@ -87,3 +87,14 @@ The application should provide a comprehensive solution for tracking products ac
 9. Customizable dashboard widgets
 
 This inventory management system should prioritize usability, performance, and data integrity, while maintaining a clean and modern user interface. The offline-first approach using IndexedDB ensures the application remains functional without an internet connection.
+
+
+WebRTC communication
+1. Device A (Offerer) creates a WebRTC offer and ICE candidates, encodes them in a QR code.
+
+2. Device B (Answerer) scans the QR, sets remote description, creates an answer and its own ICE candidates, and shows its own QR.
+
+3. Device A scans the answer QR to complete the handshake.
+
+4. Once both ends set the descriptions and ICE candidates, they connect directly — no servers needed!
+
