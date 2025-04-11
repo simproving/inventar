@@ -605,6 +605,376 @@
                 width: 100%;
             }
         }
+
+        /* Barcode Scanner Styles */
+        .scanner-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+        }
+        
+        .scanner-content {
+            background-color: var(--container-bg);
+            margin: 5% auto;
+            padding: 20px;
+            width: 90%;
+            max-width: 600px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px var(--shadow-color);
+            position: relative;
+            color: var(--text-color);
+        }
+        
+        .scanner-close {
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+        
+        #scanner-container {
+            width: 100%;
+            height: 300px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 4px;
+            background-color: #000;
+        }
+        
+        #scanner-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        #scanner-canvas {
+            display: none;
+        }
+        
+        .scanner-controls {
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .scanner-status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: var(--highlight-bg);
+            text-align: center;
+        }
+        
+        .scanner-status.success {
+            background-color: var(--location-quantity-current-bg);
+            color: var(--location-quantity-current-color);
+        }
+        
+        .scanner-status.error {
+            background-color: var(--button-danger);
+            color: white;
+        }
+        
+        .scanner-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .scanner-buttons button {
+            flex: 1;
+        }
+        
+        .scanner-buttons button.switch-camera {
+            background-color: var(--button-secondary);
+        }
+        
+        .scanner-buttons button.switch-camera:hover {
+            background-color: var(--button-secondary-hover);
+        }
+
+        /* Theme Toggle Styles */
+        .theme-toggle-container {
+            display: flex;
+            align-items: center;
+            margin-left: 10px;
+        }
+        
+        .theme-toggle-label {
+            margin-right: 8px;
+            font-size: 16px;
+        }
+        
+        .theme-toggle {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        
+        .theme-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .theme-toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .theme-toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .theme-toggle-slider {
+            background-color: var(--button-secondary);
+        }
+        
+        input:checked + .theme-toggle-slider:before {
+            transform: translateX(26px);
+        }
+        
+        /* Scan Barcode Button Style */
+        .action-btn.scan-barcode {
+            background-color: #009688;
+        }
+        
+        .action-btn.scan-barcode:hover {
+            background-color: #00796b;
+        }
+        
+        /* Barcode Assignment Button */
+        .barcode-btn {
+            padding: 4px 8px;
+            background-color: var(--button-secondary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 5px;
+            font-size: 12px;
+        }
+        
+        .barcode-btn:hover {
+            background-color: var(--button-secondary-hover);
+        }
+        
+        /* Barcode Assignment Modal */
+        .barcode-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+        }
+        
+        .barcode-content {
+            background-color: var(--container-bg);
+            margin: 5% auto;
+            padding: 20px;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px var(--shadow-color);
+            position: relative;
+            color: var(--text-color);
+        }
+        
+        .barcode-close {
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+        
+        .barcode-form {
+            margin-top: 20px;
+        }
+        
+        .barcode-form input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--container-bg);
+            color: var(--text-color);
+        }
+        
+        .barcode-form button {
+            width: 100%;
+        }
+
+        /* Settings Modal Styles */
+        .settings-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+        }
+        
+        .settings-content {
+            background-color: var(--container-bg);
+            margin: 5% auto;
+            padding: 20px;
+            width: 90%;
+            max-width: 600px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px var(--shadow-color);
+            position: relative;
+            color: var(--text-color);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .settings-close {
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+        
+        .settings-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .settings-tab {
+            padding: 10px 15px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-color);
+            font-weight: bold;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+        
+        .settings-tab:hover {
+            opacity: 1;
+        }
+        
+        .settings-tab.active {
+            opacity: 1;
+            border-bottom: 2px solid var(--button-secondary);
+        }
+        
+        .settings-panel {
+            display: none;
+        }
+        
+        .settings-panel.active {
+            display: block;
+        }
+        
+        .settings-item {
+            margin-bottom: 20px;
+        }
+        
+        .settings-item label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        
+        .settings-input-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .settings-input-group input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--container-bg);
+            color: var(--text-color);
+        }
+        
+        .settings-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--container-bg);
+        }
+        
+        .settings-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .settings-list-item:last-child {
+            border-bottom: none;
+        }
+        
+        .settings-list-item .item-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .settings-list-item .item-actions button {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+        
+        .danger-btn {
+            background-color: var(--button-danger);
+        }
+        
+        .danger-btn:hover {
+            background-color: var(--button-danger-hover);
+        }
+        
+        /* Settings Button Style */
+        .action-btn.settings-btn {
+            background-color: #607D8B;
+        }
+        
+        .action-btn.settings-btn:hover {
+            background-color: #455A64;
+        }
     </style>
 </head>
 <body>
@@ -612,35 +982,22 @@
         <h1>Inventory System</h1>
         
         <div class="top-actions">
-            <div class="user-selector">
-                <label for="userSelect">Current User: </label>
-                <select id="userSelect" onchange="changeUser()">
-                    <option value="User 1">User 1</option>
-                    <option value="User 2">User 2</option>
+            <div class="user-select">
+                <select id="userSelect" onchange="changeUser(this.value)">
+                    <option value="">Select User</option>
                 </select>
-                <button onclick="renameUser()" class="user-btn">Rename</button>
-                <button onclick="addUser()" class="user-btn add">Add User</button>
-                <button onclick="deleteUser()" class="user-btn delete">Delete</button>
             </div>
-            
+            <div class="location-select">
+                <select id="locationSelect" onchange="changeLocation(this.value)">
+                    <option value="">Select Location</option>
+                </select>
+                <button onclick="openFloorPlan()" class="floor-plan-button">Floor Plan</button>
+            </div>
             <div class="data-actions">
-                <button onclick="exportData()" class="action-btn export">Export Data</button>
-                <button onclick="importData()" class="action-btn import">Import Data</button>
-                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImportFile(event)">
-                <button onclick="toggleTheme()" class="theme-toggle" id="themeToggle">🌙 Dark Mode</button>
+                <button onclick="openSettings()">⚙️ Settings</button>
             </div>
         </div>
         
-        <div class="location-selector">
-            <select id="locationSelect" onchange="changeLocation()">
-                <option value="1">Location 1</option>
-            </select>
-            <input type="text" id="locationName" class="location-name" placeholder="Location Name" onchange="renameLocation()">
-            <button onclick="addLocation()">Add Location</button>
-            <button onclick="deleteLocation()" class="delete">Delete Location</button>
-            <button onclick="openFloorPlan()" class="floor-plan-button">Floor Plan</button>
-        </div>
-
         <div class="search-container">
             <input type="text" id="searchInput" placeholder="Search items...">
         </div>
@@ -707,6 +1064,116 @@
         </div>
     </div>
 
+    <!-- Add this after the floor plan modal -->
+    <div id="scannerModal" class="scanner-modal">
+        <div class="scanner-content">
+            <span class="scanner-close" onclick="closeScanner()">&times;</span>
+            <h2>Scan Barcode</h2>
+            
+            <div id="scanner-container">
+                <video id="scanner-video" autoplay playsinline></video>
+                <canvas id="scanner-canvas"></canvas>
+            </div>
+            
+            <div class="scanner-status" id="scanner-status">Ready to scan...</div>
+            
+            <div class="scanner-buttons">
+                <button onclick="switchCamera()" class="switch-camera">Switch Camera</button>
+                <button onclick="closeScanner()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add the barcode assignment modal -->
+    <div id="barcodeModal" class="barcode-modal">
+        <div class="barcode-content">
+            <span class="barcode-close" onclick="closeBarcodeModal()">&times;</span>
+            <h2>Assign Barcode</h2>
+            <p id="barcodeProductName"></p>
+            
+            <div class="barcode-form">
+                <input type="text" id="barcodeInput" placeholder="Enter barcode">
+                <button onclick="saveBarcode()">Save Barcode</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add settings modal -->
+    <div id="settingsModal" class="settings-modal">
+        <div class="settings-content">
+            <span class="settings-close" onclick="closeSettings()">&times;</span>
+            <h2>Settings</h2>
+            
+            <div class="settings-tabs">
+                <button class="settings-tab active" onclick="switchSettingsTab('theme')">Theme</button>
+                <button class="settings-tab" onclick="switchSettingsTab('data')">Data</button>
+                <button class="settings-tab" onclick="switchSettingsTab('users')">Users</button>
+                <button class="settings-tab" onclick="switchSettingsTab('locations')">Locations</button>
+            </div>
+            
+            <div id="themeSettings" class="settings-panel active">
+                <h3>Theme Settings</h3>
+                <div class="settings-item">
+                    <label>Dark Mode</label>
+                    <div class="theme-toggle-container">
+                        <label class="theme-toggle-label">🌙</label>
+                        <label class="theme-toggle">
+                            <input type="checkbox" id="settingsThemeCheckbox" onchange="toggleThemeFromSettings()">
+                            <span class="theme-toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="dataSettings" class="settings-panel">
+                <h3>Data Management</h3>
+                <div class="settings-item">
+                    <label>Export Data</label>
+                    <button onclick="exportData()">Export to JSON</button>
+                </div>
+                <div class="settings-item">
+                    <label>Import Data</label>
+                    <button onclick="importData()">Import from JSON</button>
+                    <input type="file" id="settingsImportFile" accept=".json" style="display: none;" onchange="handleImportFile(event)">
+                </div>
+                <div class="settings-item">
+                    <label>Clear All Data</label>
+                    <button onclick="confirmClearData()" class="danger-btn">Clear Database</button>
+                </div>
+            </div>
+            
+            <div id="usersSettings" class="settings-panel">
+                <h3>User Management</h3>
+                <div class="settings-item">
+                    <label>Add New User</label>
+                    <div class="settings-input-group">
+                        <input type="text" id="newUserName" placeholder="User Name">
+                        <button onclick="addUserFromSettings()">Add</button>
+                    </div>
+                </div>
+                <div class="settings-item">
+                    <label>Existing Users</label>
+                    <div id="usersList" class="settings-list"></div>
+                </div>
+            </div>
+            
+            <div id="locationsSettings" class="settings-panel">
+                <h3>Location Management</h3>
+                <div class="settings-item">
+                    <label>Add New Location</label>
+                    <div class="settings-input-group">
+                        <input type="text" id="newLocationName" placeholder="Location Name">
+                        <button onclick="addLocationFromSettings()">Add</button>
+                    </div>
+                </div>
+                <div class="settings-item">
+                    <label>Existing Locations</label>
+                    <div id="locationsList" class="settings-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/idb@8/build/umd.js"></script>
     <script>
         let products = [];
@@ -724,10 +1191,24 @@
         function applyTheme() {
             if (currentTheme === 'dark') {
                 document.documentElement.setAttribute('data-theme', 'dark');
-                document.getElementById('themeToggle').textContent = '☀️ Light Mode';
+                // Update both checkboxes if they exist
+                const mainCheckbox = document.getElementById('themeCheckbox');
+                const settingsCheckbox = document.getElementById('settingsThemeCheckbox');
+                
+                if (mainCheckbox) mainCheckbox.checked = true;
+                if (settingsCheckbox) settingsCheckbox.checked = true;
+                
+                document.querySelector('.theme-toggle-label').textContent = '☀️';
             } else {
                 document.documentElement.setAttribute('data-theme', 'light');
-                document.getElementById('themeToggle').textContent = '🌙 Dark Mode';
+                // Update both checkboxes if they exist
+                const mainCheckbox = document.getElementById('themeCheckbox');
+                const settingsCheckbox = document.getElementById('settingsThemeCheckbox');
+                
+                if (mainCheckbox) mainCheckbox.checked = false;
+                if (settingsCheckbox) settingsCheckbox.checked = false;
+                
+                document.querySelector('.theme-toggle-label').textContent = '🌙';
             }
         }
 
@@ -739,6 +1220,11 @@
             currentTheme = currentTheme === 'light' ? 'dark' : 'light';
             localStorage.setItem('theme', currentTheme);
             applyTheme();
+        }
+
+        // Toggle theme from settings
+        function toggleThemeFromSettings() {
+            toggleTheme();
         }
 
         const initDB = async () => {
@@ -1006,19 +1492,21 @@
 
         function updateLocationSelect() {
             const select = document.getElementById('locationSelect');
-            select.innerHTML = locations.map(loc => 
-                `<option value="${loc.id}" ${loc.id === currentLocation ? 'selected' : ''}>${loc.name}</option>`
-            ).join('');
+            select.innerHTML = '<option value="">Select Location</option>';
             
-            // Update the location name input
-            const currentLoc = locations.find(loc => loc.id === currentLocation);
-            document.getElementById('locationName').value = currentLoc ? currentLoc.name : '';
+            locations.forEach(location => {
+                const option = document.createElement('option');
+                option.value = location.id;
+                option.textContent = location.name;
+                if (location.id === currentLocation) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
         }
 
-        function changeLocation() {
-            currentLocation = document.getElementById('locationSelect').value;
-            const currentLoc = locations.find(loc => loc.id === currentLocation);
-            document.getElementById('locationName').value = currentLoc ? currentLoc.name : '';
+        function changeLocation(selectedLocationId) {
+            currentLocation = selectedLocationId;
             updateTable();
         }
 
@@ -1996,7 +2484,8 @@
                 const matchesName = product.name.toLowerCase().includes(searchTerm);
                 const matchesAlias = Array.isArray(product.aliases) && 
                                     product.aliases.some(alias => alias.toLowerCase().includes(searchTerm));
-                return matchesName || matchesAlias;
+                const matchesBarcode = product.barcode && product.barcode.toLowerCase().includes(searchTerm);
+                return matchesName || matchesAlias || matchesBarcode;
             });
             
             // Sort by name
@@ -2009,6 +2498,7 @@
                 
                 const tr = document.createElement('tr');
                 tr.className = 'item-row';
+                tr.dataset.productId = product.id;
                 
                 const locationQuantities = locations.map(loc => {
                     const quantity = entry.quantities[loc.id] || 0;
@@ -2034,6 +2524,7 @@
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <span class="editable" onclick="editField('${product.id}', 'name', this)">${product.name}</span>
                             <button class="toggle-details-btn" onclick="toggleDetails('${product.id}')">▼</button>
+                            ${product.barcode ? `<span class="barcode-display">[${product.barcode}]</span>` : ''}
                         </div>
                     </td>
                     <td>
@@ -2062,6 +2553,7 @@
                     </td>
                     <td>
                         <button onclick="deleteItem('${product.id}')">Delete</button>
+                        <button class="barcode-btn" onclick="openBarcodeModal('${product.id}')">${product.barcode ? 'Edit Barcode' : 'Add Barcode'}</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -2601,16 +3093,9 @@
             }
         }
 
-        function changeUser() {
-            const userSelect = document.getElementById('userSelect');
-            const selectedUserName = userSelect.value;
-            const selectedUser = users.find(user => user.name === selectedUserName);
-            
-            if (selectedUser) {
-                currentUser = selectedUser.name;
-                currentUserId = selectedUser.id;
-                console.log('Current user changed to:', currentUser, '(ID:', currentUserId, ')');
-            }
+        function changeUser(selectedUserId) {
+            currentUser = selectedUserId;
+            updateTable();
         }
         
         async function renameUser() {
@@ -2727,20 +3212,33 @@
         }
         
         async function loadUsers() {
-            // Update user dropdown from users array
-            const userSelect = document.getElementById('userSelect');
-            userSelect.innerHTML = '';
-            
-            for (const user of users) {
-                const option = document.createElement('option');
-                option.text = user.name;
-                option.value = user.name;
-                userSelect.add(option);
-            }
-            
-            // Select current user
-            if (currentUser) {
-                userSelect.value = currentUser;
+            try {
+                users = await loadFromIndexedDB('users') || [];
+                const userSelect = document.getElementById('userSelect');
+                
+                // Only update the user selector if it exists
+                if (userSelect) {
+                    userSelect.innerHTML = '<option value="">Select User</option>';
+                    users.forEach(user => {
+                        const option = document.createElement('option');
+                        option.value = user.id;
+                        option.textContent = user.name;
+                        if (user.id === currentUser) {
+                            option.selected = true;
+                        }
+                        userSelect.appendChild(option);
+                    });
+                }
+                
+                // Update current user if not set
+                if (!currentUser && users.length > 0) {
+                    currentUser = users[0].id;
+                }
+                
+                // Update the table to reflect any user changes
+                updateTable();
+            } catch (error) {
+                console.error('Error loading users:', error);
             }
         }
 
@@ -2792,7 +3290,13 @@
         
         function importData() {
             // Trigger file input click
-            document.getElementById('importFile').click();
+            const importFile = document.getElementById('settingsImportFile');
+            if (importFile) {
+                importFile.click();
+            } else {
+                console.error('Import file input not found');
+                alert('Error: Import functionality not available');
+            }
         }
         
         async function handleImportFile(event) {
@@ -2806,7 +3310,7 @@
                     return;
                 }
                 
-                // Read file
+                // Start import immediately after confirmation
                 const reader = new FileReader();
                 
                 reader.onload = async (e) => {
@@ -2818,9 +3322,6 @@
                         if (!importData.products || !importData.locations || !importData.inventory) {
                             throw new Error('Invalid import file format');
                         }
-                        
-                        // Show loading message
-                        alert('Importing data... Please wait.');
                         
                         // Import each store
                         if (importData.products && Array.isArray(importData.products)) {
@@ -2873,6 +3374,9 @@
                         
                         console.log('Data imported successfully');
                         alert('Data imported successfully!');
+                        
+                        // Close settings modal if it's open
+                        closeSettings();
                     } catch (error) {
                         console.error('Error parsing import file:', error);
                         alert('Error importing data: ' + error.message);
@@ -2891,6 +3395,603 @@
             } catch (error) {
                 console.error('Error handling import file:', error);
                 alert('Error handling import file: ' + error.message);
+            }
+        }
+
+        // Add ESC key support for settings modal
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                const settingsModal = document.getElementById('settingsModal');
+                if (settingsModal.style.display === 'block') {
+                    closeSettings();
+                } else {
+                    openSettings();
+                }
+            }
+        });
+
+        // Barcode Scanner Variables
+        let scannerStream = null;
+        let scannerInterval = null;
+        let currentCameraIndex = 0;
+        let availableCameras = [];
+        
+        // Open the barcode scanner modal
+        async function openScanner() {
+            const modal = document.getElementById('scannerModal');
+            modal.style.display = 'block';
+            
+            try {
+                // Get available cameras
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                availableCameras = devices.filter(device => device.kind === 'videoinput');
+                
+                if (availableCameras.length === 0) {
+                    document.getElementById('scanner-status').textContent = 'No cameras found';
+                    document.getElementById('scanner-status').className = 'scanner-status error';
+                    return;
+                }
+                
+                // Start with the first camera
+                await startScanner(0);
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                document.getElementById('scanner-status').textContent = 'Error accessing camera: ' + error.message;
+                document.getElementById('scanner-status').className = 'scanner-status error';
+            }
+        }
+        
+        // Close the scanner modal
+        function closeScanner() {
+            const modal = document.getElementById('scannerModal');
+            modal.style.display = 'none';
+            
+            // Stop the scanner
+            stopScanner();
+        }
+        
+        // Start the barcode scanner with the specified camera
+        async function startScanner(cameraIndex) {
+            // Stop any existing scanner
+            stopScanner();
+            
+            try {
+                // Get the video element
+                const video = document.getElementById('scanner-video');
+                const canvas = document.getElementById('scanner-canvas');
+                const context = canvas.getContext('2d');
+                
+                // Set up constraints for the selected camera
+                const constraints = {
+                    video: {
+                        deviceId: availableCameras[cameraIndex].deviceId,
+                        facingMode: cameraIndex === 0 ? 'environment' : 'user'
+                    }
+                };
+                
+                // Get the camera stream
+                scannerStream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = scannerStream;
+                
+                // Wait for video to be ready
+                await new Promise((resolve) => {
+                    video.onloadedmetadata = () => {
+                        video.play();
+                        resolve();
+                    };
+                });
+                
+                // Set canvas dimensions to match video
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                
+                // Start scanning
+                scannerInterval = setInterval(() => {
+                    // Draw the current video frame to the canvas
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    
+                    // Get the image data
+                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                    
+                    // Try to detect a barcode
+                    detectBarcode(imageData);
+                }, 100); // Check every 100ms
+                
+                document.getElementById('scanner-status').textContent = 'Scanning...';
+                document.getElementById('scanner-status').className = 'scanner-status';
+                
+            } catch (error) {
+                console.error('Error starting scanner:', error);
+                document.getElementById('scanner-status').textContent = 'Error starting scanner: ' + error.message;
+                document.getElementById('scanner-status').className = 'scanner-status error';
+            }
+        }
+        
+        // Stop the scanner
+        function stopScanner() {
+            // Clear the interval
+            if (scannerInterval) {
+                clearInterval(scannerInterval);
+                scannerInterval = null;
+            }
+            
+            // Stop the video stream
+            if (scannerStream) {
+                scannerStream.getTracks().forEach(track => track.stop());
+                scannerStream = null;
+            }
+            
+            // Clear the video source
+            const video = document.getElementById('scanner-video');
+            if (video.srcObject) {
+                video.srcObject = null;
+            }
+        }
+        
+        // Switch to the next available camera
+        function switchCamera() {
+            if (availableCameras.length <= 1) {
+                document.getElementById('scanner-status').textContent = 'Only one camera available';
+                return;
+            }
+            
+            currentCameraIndex = (currentCameraIndex + 1) % availableCameras.length;
+            startScanner(currentCameraIndex);
+        }
+        
+        // Detect barcode in the image data
+        function detectBarcode(imageData) {
+            // This is a simplified barcode detection
+            // In a real implementation, you would use a library like ZXing or QuaggaJS
+            
+            // For demonstration, we'll simulate finding a barcode after a few seconds
+            if (Math.random() < 0.01) { // 1% chance of finding a barcode each frame
+                const barcodeValue = '123456789012'; // Simulated barcode value
+                
+                // Show success message
+                const statusElement = document.getElementById('scanner-status');
+                statusElement.textContent = 'Barcode found: ' + barcodeValue;
+                statusElement.className = 'scanner-status success';
+                
+                // Stop scanning
+                stopScanner();
+                
+                // Look up the product by barcode
+                lookupProductByBarcode(barcodeValue);
+            }
+        }
+        
+        // Look up a product by barcode
+        function lookupProductByBarcode(barcode) {
+            // In a real implementation, you would look up the product in your database
+            // For now, we'll just search for a product with a matching ID
+            
+            const product = products.find(p => p.id === barcode);
+            
+            if (product) {
+                // Product found, scroll to it in the table
+                const productRow = document.querySelector(`tr[data-product-id="${product.id}"]`);
+                if (productRow) {
+                    productRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    productRow.classList.add('highlight-row');
+                    setTimeout(() => {
+                        productRow.classList.remove('highlight-row');
+                    }, 2000);
+                }
+                
+                // Add to history
+                addToHistory({
+                    type: 'scan_barcode',
+                    productId: product.id,
+                    productName: product.name,
+                    barcode: barcode,
+                    timestamp: new Date().toISOString()
+                });
+            } else {
+                // Product not found, ask if user wants to add it
+                if (confirm(`No product found with barcode ${barcode}. Would you like to add it?`)) {
+                    // Pre-fill the add item form
+                    document.getElementById('itemName').value = `Product ${barcode}`;
+                    document.getElementById('itemQuantity').value = '1';
+                    document.getElementById('itemPrice').value = '0.00';
+                    
+                    // Focus on the name field for editing
+                    document.getElementById('itemName').focus();
+                }
+            }
+        }
+        
+        // Add this to the style section
+        document.head.insertAdjacentHTML('beforeend', `
+            <style>
+                .highlight-row {
+                    animation: highlight 2s ease-out;
+                }
+                
+                @keyframes highlight {
+                    0% { background-color: rgba(255, 255, 0, 0.5); }
+                    100% { background-color: transparent; }
+                }
+            </style>
+        `);
+
+        // Add barcode assignment functions
+        let currentBarcodeProductId = null;
+        
+        function openBarcodeModal(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+            
+            currentBarcodeProductId = productId;
+            document.getElementById('barcodeProductName').textContent = product.name;
+            document.getElementById('barcodeInput').value = product.barcode || '';
+            document.getElementById('barcodeModal').style.display = 'block';
+            document.getElementById('barcodeInput').focus();
+        }
+        
+        function closeBarcodeModal() {
+            document.getElementById('barcodeModal').style.display = 'none';
+            currentBarcodeProductId = null;
+        }
+        
+        async function saveBarcode() {
+            if (!currentBarcodeProductId) return;
+            
+            const barcode = document.getElementById('barcodeInput').value.trim();
+            const product = products.find(p => p.id === currentBarcodeProductId);
+            
+            if (!product) return;
+            
+            const oldBarcode = product.barcode || '';
+            product.barcode = barcode;
+            
+            await addToHistory({
+                type: 'assign_barcode',
+                productId: product.id,
+                productName: product.name,
+                oldValue: oldBarcode,
+                newValue: barcode,
+                timestamp: new Date().toISOString()
+            });
+            
+            await save();
+            closeBarcodeModal();
+            updateTable();
+        }
+
+        // Settings Functions
+        function openSettings() {
+            const modal = document.getElementById('settingsModal');
+            modal.style.display = 'block';
+            
+            // Update theme toggle state
+            document.getElementById('settingsThemeCheckbox').checked = currentTheme === 'dark';
+            
+            // Load users and locations lists
+            updateUsersList();
+            updateLocationsList();
+        }
+        
+        function closeSettings() {
+            const modal = document.getElementById('settingsModal');
+            modal.style.display = 'none';
+        }
+        
+        function switchSettingsTab(tabName) {
+            // Hide all panels
+            document.querySelectorAll('.settings-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            
+            // Deactivate all tabs
+            document.querySelectorAll('.settings-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected panel
+            document.getElementById(tabName + 'Settings').classList.add('active');
+            
+            // Activate selected tab
+            document.querySelector(`.settings-tab[onclick="switchSettingsTab('${tabName}')"]`).classList.add('active');
+        }
+        
+        function toggleThemeFromSettings() {
+            toggleTheme();
+        }
+        
+        function updateUsersList() {
+            const usersList = document.getElementById('usersList');
+            usersList.innerHTML = '';
+            
+            users.forEach(user => {
+                const listItem = document.createElement('div');
+                listItem.className = 'settings-list-item';
+                
+                const isCurrentUser = user.name === currentUser;
+                
+                listItem.innerHTML = `
+                    <span>${user.name}${isCurrentUser ? ' (Current)' : ''}</span>
+                    <div class="item-actions">
+                        ${!isCurrentUser ? `
+                            <button onclick="renameUserFromSettings('${user.id}')">Rename</button>
+                            <button onclick="deleteUserFromSettings('${user.id}')" class="danger-btn">Delete</button>
+                        ` : ''}
+                    </div>
+                `;
+                
+                usersList.appendChild(listItem);
+            });
+        }
+        
+        function updateLocationsList() {
+            const locationsList = document.getElementById('locationsList');
+            locationsList.innerHTML = '';
+            
+            locations.forEach(location => {
+                const listItem = document.createElement('div');
+                listItem.className = 'settings-list-item';
+                
+                const isCurrentLocation = location.id === currentLocation;
+                
+                listItem.innerHTML = `
+                    <span>${location.name}${isCurrentLocation ? ' (Current)' : ''}</span>
+                    <div class="item-actions">
+                        ${!isCurrentLocation ? `
+                            <button onclick="renameLocationFromSettings('${location.id}')">Rename</button>
+                            <button onclick="deleteLocationFromSettings('${location.id}')" class="danger-btn">Delete</button>
+                        ` : ''}
+                    </div>
+                `;
+                
+                locationsList.appendChild(listItem);
+            });
+        }
+        
+        async function addUserFromSettings() {
+            const nameInput = document.getElementById('newUserName');
+            const newName = nameInput.value.trim();
+            
+            if (!newName) {
+                alert('Please enter a user name');
+                return;
+            }
+            
+            // Check if name already exists
+            if (users.some(user => user.name === newName)) {
+                alert('A user with this name already exists');
+                return;
+            }
+            
+            // Create new user object
+            const newUser = {
+                id: 'user-' + Date.now(),
+                name: newName
+            };
+            
+            // Add to users array
+            users.push(newUser);
+            
+            // Save to IndexedDB
+            await saveToIndexedDB('users', users);
+            
+            // Update UI
+            updateUsersList();
+            nameInput.value = '';
+            
+            // Update user dropdown
+            await loadUsers();
+        }
+        
+        async function renameUserFromSettings(userId) {
+            const user = users.find(u => u.id === userId);
+            if (!user) return;
+            
+            const newName = prompt("Enter new name for " + user.name + ":", user.name);
+            
+            if (newName && newName.trim() !== "") {
+                // Check if name already exists
+                if (users.some(u => u.id !== userId && u.name === newName)) {
+                    alert('A user with this name already exists');
+                    return;
+                }
+                
+                // Update in users array
+                user.name = newName;
+                
+                // Update current user if needed
+                if (user.id === currentUserId) {
+                    currentUser = newName;
+                }
+                
+                // Update in history
+                updateUserInHistory(user.name, newName);
+                
+                // Save to IndexedDB
+                await saveToIndexedDB('users', users);
+                
+                // Update UI
+                updateUsersList();
+                
+                // Update user dropdown
+                await loadUsers();
+            }
+        }
+        
+        async function deleteUserFromSettings(userId) {
+            const user = users.find(u => u.id === userId);
+            if (!user) return;
+            
+            // Prevent deleting if only one user remains
+            if (users.length <= 1) {
+                alert("Cannot delete the last user.");
+                return;
+            }
+            
+            if (confirm("Are you sure you want to delete user: " + user.name + "?")) {
+                // Remove from users array
+                users = users.filter(u => u.id !== userId);
+                
+                // Update current user if needed
+                if (userId === currentUserId) {
+                    currentUser = users[0].name;
+                    currentUserId = users[0].id;
+                }
+                
+                // Save to IndexedDB
+                await saveToIndexedDB('users', users);
+                
+                // Update UI
+                updateUsersList();
+                
+                // Update user dropdown
+                await loadUsers();
+            }
+        }
+        
+        async function addLocationFromSettings() {
+            const nameInput = document.getElementById('newLocationName');
+            const newName = nameInput.value.trim();
+            
+            if (!newName) {
+                alert('Please enter a location name');
+                return;
+            }
+            
+            // Check if name already exists
+            if (locations.some(loc => loc.name === newName)) {
+                alert('A location with this name already exists');
+                return;
+            }
+            
+            // Create new location
+            const newLocationId = String(Date.now());
+            const newLocation = {
+                id: newLocationId,
+                name: newName
+            };
+            
+            // Add to locations array
+            locations.push(newLocation);
+            
+            // Save to IndexedDB
+            await saveToIndexedDB('locations', locations);
+            
+            // Update UI
+            updateLocationsList();
+            nameInput.value = '';
+            
+            // Update location dropdown
+            updateLocationSelect();
+        }
+        
+        async function renameLocationFromSettings(locationId) {
+            const location = locations.find(loc => loc.id === locationId);
+            if (!location) return;
+            
+            const newName = prompt("Enter new name for " + location.name + ":", location.name);
+            
+            if (newName && newName.trim() !== "") {
+                // Check if name already exists
+                if (locations.some(loc => loc.id !== locationId && loc.name === newName)) {
+                    alert('A location with this name already exists');
+                    return;
+                }
+                
+                const oldName = location.name;
+                location.name = newName;
+                
+                await addToHistory({
+                    type: 'rename_location',
+                    locationId: locationId,
+                    oldName: oldName,
+                    newName: newName,
+                    timestamp: new Date().toISOString()
+                });
+                
+                // Save to IndexedDB
+                await saveToIndexedDB('locations', locations);
+                
+                // Update UI
+                updateLocationsList();
+                
+                // Update location dropdown
+                updateLocationSelect();
+            }
+        }
+        
+        async function deleteLocationFromSettings(locationId) {
+            const location = locations.find(loc => loc.id === locationId);
+            if (!location) return;
+            
+            // Prevent deleting if only one location remains
+            if (locations.length <= 1) {
+                alert("Cannot delete the last location.");
+                return;
+            }
+            
+            if (confirm("Are you sure you want to delete location: " + location.name + "? All inventory items in this location will be deleted.")) {
+                // Remove inventory items for this location
+                inventoryItems = inventoryItems.filter(item => item.locationId !== locationId);
+                
+                // Remove the location
+                locations = locations.filter(loc => loc.id !== locationId);
+                
+                // Update current location if needed
+                if (locationId === currentLocation) {
+                    currentLocation = locations[0].id;
+                }
+                
+                await addToHistory({
+                    type: 'delete_location',
+                    location: location,
+                    timestamp: new Date().toISOString()
+                });
+                
+                // Save to IndexedDB
+                await saveToIndexedDB('locations', locations);
+                await saveToIndexedDB('inventory', inventoryItems);
+                
+                // Update UI
+                updateLocationsList();
+                
+                // Update location dropdown
+                updateLocationSelect();
+                updateTable();
+            }
+        }
+        
+        async function confirmClearData() {
+            if (confirm("Are you sure you want to clear all data? This action cannot be undone.")) {
+                if (confirm("FINAL WARNING: All your data will be permanently deleted. Continue?")) {
+                    try {
+                        // Clear all object stores
+                        await db.clear('products');
+                        await db.clear('locations');
+                        await db.clear('inventory');
+                        await db.clear('transactions');
+                        await db.clear('floorPlans');
+                        
+                        // Reset arrays
+                        products = [];
+                        locations = [{ id: '1', name: 'Location 1' }];
+                        inventoryItems = [];
+                        transactions = [];
+                        currentLocation = '1';
+                        
+                        // Save default location
+                        await saveToIndexedDB('locations', locations);
+                        
+                        // Update UI
+                        updateLocationSelect();
+                        updateTable();
+                        updateHistory();
+                        
+                        alert('All data has been cleared. The application has been reset to default settings.');
+                    } catch (error) {
+                        console.error('Error clearing data:', error);
+                        alert('Error clearing data: ' + error.message);
+                    }
+                }
             }
         }
     </script>
