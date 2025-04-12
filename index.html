@@ -980,6 +980,83 @@
             gap: 10px;
             margin-top: 10px;
         }
+
+        .barcode-display {
+            font-family: monospace;
+            background-color: rgba(0,0,0,0.05);
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            display: inline-block;
+        }
+        
+        .small-btn {
+            padding: 2px 5px;
+            font-size: 0.8em;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .small-btn:hover {
+            background-color: #e9ecef;
+        }
+        
+        .scanner-result {
+            margin-top: 15px;
+            padding: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .product-result {
+            margin-top: 10px;
+            padding: 10px;
+        }
+        
+        .alert {
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .alert-warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 6px 12px;
+            margin: 5px 3px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+        
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            color: white;
+        }
+        
+        .mt-3 {
+            margin-top: 1rem;
+        }
     </style>
 </head>
 <body>
@@ -999,7 +1076,7 @@
                 <button onclick="openFloorPlan()" class="floor-plan-button">Floor Plan</button>
             </div>
             <div class="data-actions">
-                <button onclick="openScanner()">Scan Barcode</button>
+                <button onclick="openBarcodeScanner()">Scan Barcode</button>
                 <button onclick="openSettings()">⚙️ Settings</button>
             </div>
         </div>
@@ -1073,19 +1150,22 @@
     <!-- Add this after the floor plan modal -->
     <div id="scannerModal" class="scanner-modal">
         <div class="scanner-content">
-            <span class="scanner-close" onclick="closeScanner()">&times;</span>
+            <span class="scanner-close" onclick="closeBarcodeScanner()">&times;</span>
             <h2>Scan Barcode</h2>
             
             <div id="scanner-container">
-                <video id="scanner-video" autoplay playsinline></video>
+                <video id="video" autoplay playsinline></video>
                 <canvas id="scanner-canvas"></canvas>
             </div>
+            
+            <div id="scannerResult" class="scanner-result"></div>
+            <div id="productResult" class="product-result"></div>
             
             <div class="scanner-status" id="scanner-status">Ready to scan...</div>
             
             <div class="scanner-buttons">
                 <button onclick="switchCamera()" class="switch-camera">Switch Camera</button>
-                <button onclick="closeScanner()">Close</button>
+                <button onclick="closeBarcodeScanner()">Close</button>
             </div>
         </div>
     </div>
@@ -1182,7 +1262,14 @@
 
     <script src="https://cdn.jsdelivr.net/npm/idb@8/build/umd.js"></script>
     <script src="https://unpkg.com/konva@9/konva.min.js"></script>
-    <script>
+    <script type="module">
+        import { BrowserMultiFormatReader, NotFoundException } from 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/+esm';
+        window.BrowserMultiFormatReader = BrowserMultiFormatReader;
+        window.NotFoundException = NotFoundException;
+    </script>
+
+    <script >
+
         let products = [];
         let inventoryItems = [];
         let locations = [];
@@ -1359,7 +1446,8 @@
                         id: 'example-1',
                         name: 'Example Product',
                         price: 9.99,
-                        comments: 'This is an example product to help you get started.'
+                        comments: 'This is an example product to help you get started.',
+                        barcode: '1234567890', // Add barcode field with empty default value
                     };
                     products.push(exampleProduct);
                     
@@ -1622,9 +1710,10 @@
             if (!product) {
                 product = { 
                     id: Date.now().toString(),
-                name, 
-                price,
+                    name, 
+                    price,
                     comments: '',
+                    barcode: '', // Add barcode field with empty default value
                     aliases: []
                 };
                 products.push(product);
@@ -2159,7 +2248,7 @@
                     (transaction.productName && transaction.productName.toLowerCase().includes(searchTerm)) || 
                     (transaction.productId && products.some(p => 
                         p.id === transaction.productId && 
-                        (p.name.toLowerCase().includes(searchTerm) || 
+                            (p.name.toLowerCase().includes(searchTerm) || 
                          (Array.isArray(p.aliases) && p.aliases.some(alias => alias.toLowerCase().includes(searchTerm))))
                     ))
                 ) : 
@@ -2323,7 +2412,6 @@
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <span class="editable" onclick="editField('${product.id}', 'name', this)">${product.name}</span>
                             <button class="toggle-details-btn" onclick="toggleDetails('${product.id}')">▼</button>
-                            ${product.barcode ? `<span class="barcode-display">[${product.barcode}]</span>` : ''}
                         </div>
                     </td>
                     <td>
@@ -3080,7 +3168,7 @@
             canvasContainer.addEventListener('dragover', onDragOver);
             canvasContainer.addEventListener('drop', onDrop);
         }
-        
+
         function onDragStart(e) {
             e.dataTransfer.setData('productId', e.target.dataset.productId);
             e.dataTransfer.setData('productName', e.target.dataset.productName);
@@ -3191,12 +3279,12 @@
                 console.log("Product placed:", productName, "at", x, y);
                 
                 // Add to placedProducts array
-                placedProducts.push({
-                    productId: productId,
-                    name: productName,
-                    x: x,
-                    y: y
-                });
+            placedProducts.push({
+                productId: productId,
+                name: productName,
+                x: x,
+                y: y
+            });
             } catch (error) {
                 console.error("Error placing product:", error);
             }
@@ -3579,157 +3667,16 @@
         let currentCameraIndex = 0;
         let availableCameras = [];
         
-        // Open the barcode scanner modal
-        async function openScanner() {
-            const modal = document.getElementById('scannerModal');
-            modal.style.display = 'block';
-            
-            try {
-                // Get available cameras
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                availableCameras = devices.filter(device => device.kind === 'videoinput');
-                
-                if (availableCameras.length === 0) {
-                    document.getElementById('scanner-status').textContent = 'No cameras found';
-                    document.getElementById('scanner-status').className = 'scanner-status error';
-                    return;
-                }
-                
-                // Start with the first camera
-                await startScanner(0);
-            } catch (error) {
-                console.error('Error accessing camera:', error);
-                document.getElementById('scanner-status').textContent = 'Error accessing camera: ' + error.message;
-                document.getElementById('scanner-status').className = 'scanner-status error';
-            }
-        }
         
-        // Close the scanner modal
-        function closeScanner() {
-            const modal = document.getElementById('scannerModal');
-            modal.style.display = 'none';
-            
-            // Stop the scanner
-            stopScanner();
-        }
-        
-        // Start the barcode scanner with the specified camera
-        async function startScanner(cameraIndex) {
-            // Stop any existing scanner
-            stopScanner();
-            
-            try {
-                // Get the video element
-                const video = document.getElementById('scanner-video');
-                const canvas = document.getElementById('scanner-canvas');
-                const context = canvas.getContext('2d');
-                
-                // Set up constraints for the selected camera
-                const constraints = {
-                    video: {
-                        deviceId: availableCameras[cameraIndex].deviceId,
-                        facingMode: cameraIndex === 0 ? 'environment' : 'user'
-                    }
-                };
-                
-                // Get the camera stream
-                scannerStream = await navigator.mediaDevices.getUserMedia(constraints);
-                video.srcObject = scannerStream;
-                
-                // Wait for video to be ready
-                await new Promise((resolve) => {
-                    video.onloadedmetadata = () => {
-                        video.play();
-                        resolve();
-                    };
-                });
-                
-                // Set canvas dimensions to match video
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                
-                // Start scanning
-                scannerInterval = setInterval(() => {
-                    // Draw the current video frame to the canvas
-                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    
-                    // Get the image data
-                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                    
-                    // Try to detect a barcode
-                    detectBarcode(imageData);
-                }, 100); // Check every 100ms
-                
-                document.getElementById('scanner-status').textContent = 'Scanning...';
-                document.getElementById('scanner-status').className = 'scanner-status';
-                
-            } catch (error) {
-                console.error('Error starting scanner:', error);
-                document.getElementById('scanner-status').textContent = 'Error starting scanner: ' + error.message;
-                document.getElementById('scanner-status').className = 'scanner-status error';
-            }
-        }
-        
-        // Stop the scanner
-        function stopScanner() {
-            // Clear the interval
-            if (scannerInterval) {
-                clearInterval(scannerInterval);
-                scannerInterval = null;
-            }
-            
-            // Stop the video stream
-            if (scannerStream) {
-                scannerStream.getTracks().forEach(track => track.stop());
-                scannerStream = null;
-            }
-            
-            // Clear the video source
-            const video = document.getElementById('scanner-video');
-            if (video.srcObject) {
-                video.srcObject = null;
-            }
-        }
-        
-        // Switch to the next available camera
-        function switchCamera() {
-            if (availableCameras.length <= 1) {
-                document.getElementById('scanner-status').textContent = 'Only one camera available';
-                return;
-            }
-            
-            currentCameraIndex = (currentCameraIndex + 1) % availableCameras.length;
-            startScanner(currentCameraIndex);
-        }
-        
-        // Detect barcode in the image data
-        function detectBarcode(imageData) {
-            // This is a simplified barcode detection
-            // In a real implementation, you would use a library like ZXing or QuaggaJS
-            
-            // For demonstration, we'll simulate finding a barcode after a few seconds
-            if (Math.random() < 0.01) { // 1% chance of finding a barcode each frame
-                const barcodeValue = '123456789012'; // Simulated barcode value
-                
-                // Show success message
-                const statusElement = document.getElementById('scanner-status');
-                statusElement.textContent = 'Barcode found: ' + barcodeValue;
-                statusElement.className = 'scanner-status success';
-                
-                // Stop scanning
-                stopScanner();
-                
-                // Look up the product by barcode
-                lookupProductByBarcode(barcodeValue);
-            }
-        }
+        // Store the ZXing reader instance
+        let codeReader = null;
         
         // Look up a product by barcode
         function lookupProductByBarcode(barcode) {
             // In a real implementation, you would look up the product in your database
             // For now, we'll just search for a product with a matching ID
             
-            const product = products.find(p => p.id === barcode);
+            const product = products.find(p => p.id === barcode || p.barcode === barcode);
             
             if (product) {
                 // Product found, scroll to it in the table
@@ -3780,7 +3727,8 @@
 
         // Add barcode assignment functions
         let currentBarcodeProductId = null;
-        
+        let currentScannedBarcode = null;
+
         function openBarcodeModal(productId) {
             const product = products.find(p => p.id === productId);
             if (!product) return;
@@ -3791,12 +3739,148 @@
             document.getElementById('barcodeModal').style.display = 'block';
             document.getElementById('barcodeInput').focus();
         }
-        
+
+        function showBarcodeAssignmentModal(barcode) {
+            // Create a select dropdown with all products
+            const modal = document.getElementById('assignBarcodeModal') || createAssignBarcodeModal();
+            const productSelect = document.getElementById('assignBarcodeProductSelect');
+            
+            // Clear previous options
+            productSelect.innerHTML = '';
+            
+            // Add options for all products without barcodes
+            products.forEach(product => {
+                const option = document.createElement('option');
+                option.value = product.id;
+                option.textContent = product.name;
+                productSelect.appendChild(option);
+            });
+            
+            // Set the scanned barcode
+            currentScannedBarcode = barcode;
+            document.getElementById('assignBarcodeValue').textContent = barcode;
+            
+            // Show modal
+            modal.style.display = 'block';
+        }
+
+        function createAssignBarcodeModal() {
+            // Create modal if it doesn't exist
+            const modal = document.createElement('div');
+            modal.id = 'assignBarcodeModal';
+            modal.className = 'modal';
+            
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Assign Barcode</h2>
+                        <span class="close" onclick="closeAssignBarcodeModal()">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <p>Barcode: <strong id="assignBarcodeValue"></strong></p>
+                        <p>Select product to assign this barcode to:</p>
+                        <select id="assignBarcodeProductSelect" class="form-control"></select>
+                    </div>
+                    <div class="modal-footer">
+                        <button onclick="assignBarcodeToExistingProduct()">Assign Barcode</button>
+                        <button onclick="closeAssignBarcodeModal()">Cancel</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            return modal;
+        }
+
+        function closeAssignBarcodeModal() {
+            const modal = document.getElementById('assignBarcodeModal');
+            if (modal) modal.style.display = 'none';
+            currentScannedBarcode = null;
+        }
+
+        async function assignBarcodeToExistingProduct() {
+            const productId = document.getElementById('assignBarcodeProductSelect').value;
+            const product = products.find(p => p.id === productId);
+            
+            if (!product || !currentScannedBarcode) return;
+            
+            // Update the product barcode
+            const oldBarcode = product.barcode || '';
+            product.barcode = currentScannedBarcode;
+            
+            // Add to history
+            await addToHistory({
+                type: 'assign_barcode',
+                productId: product.id,
+                productName: product.name,
+                oldValue: oldBarcode,
+                newValue: currentScannedBarcode,
+                timestamp: new Date().toISOString()
+            });
+            
+            // Save to database
+            await save();
+            
+            // Close modal
+            closeAssignBarcodeModal();
+            closeBarcodeScanner();
+            
+            // Show success message
+            alert(`Barcode ${currentScannedBarcode} assigned to ${product.name}`);
+            
+            // Update UI
+            updateTable();
+        }
+
+        async function assignBarcodeToNewProduct(barcode) {
+            // Pre-fill the item form
+            document.getElementById('itemName').value = `Product ${barcode}`;
+            document.getElementById('itemQuantity').value = '1';
+            document.getElementById('itemPrice').value = '0.00';
+            
+            // Close barcode scanner
+            closeBarcodeScanner();
+            
+            // Focus on the name field
+            document.getElementById('itemName').focus();
+            
+            // Create a new product with the barcode
+            const product = { 
+                id: Date.now().toString(),
+                name: `Product ${barcode}`,
+                price: 0,
+                comments: '',
+                barcode: barcode,
+                aliases: []
+            };
+            
+            // Add to products array
+            products.push(product);
+            
+            // Add to history
+            await addToHistory({
+                type: 'create_product',
+                productId: product.id,
+                productName: product.name,
+                barcode: barcode,
+                timestamp: new Date().toISOString()
+            });
+            
+            // Save to database
+            await save();
+            
+            // Update UI
+            updateTable();
+            
+            // Show success message
+            alert(`New product created with barcode ${barcode}. Please update the details.`);
+        }
+
         function closeBarcodeModal() {
             document.getElementById('barcodeModal').style.display = 'none';
             currentBarcodeProductId = null;
         }
-        
+
         async function saveBarcode() {
             if (!currentBarcodeProductId) return;
             
@@ -3804,6 +3888,28 @@
             const product = products.find(p => p.id === currentBarcodeProductId);
             
             if (!product) return;
+            
+            // Check if barcode already exists on another product
+            const existingProduct = products.find(p => p.barcode === barcode && p.id !== currentBarcodeProductId);
+            if (barcode && existingProduct) {
+                if (!confirm(`This barcode is already assigned to product "${existingProduct.name}". Do you want to reassign it?`)) {
+                    return;
+                }
+                
+                // Remove barcode from existing product
+                const oldBarcode = existingProduct.barcode;
+                existingProduct.barcode = '';
+                
+                // Add to history
+                await addToHistory({
+                    type: 'remove_barcode',
+                    productId: existingProduct.id,
+                    productName: existingProduct.name,
+                    oldValue: oldBarcode,
+                    newValue: '',
+                    timestamp: new Date().toISOString()
+                });
+            }
             
             const oldBarcode = product.barcode || '';
             product.barcode = barcode;
@@ -3856,10 +3962,6 @@
             
             // Activate selected tab
             document.querySelector(`.settings-tab[onclick="switchSettingsTab('${tabName}')"]`).classList.add('active');
-        }
-        
-        function toggleThemeFromSettings() {
-            toggleTheme();
         }
         
         function updateUsersList() {
@@ -4156,6 +4258,160 @@
                     }
                 }
             }
+        }
+
+        // Function to open scanner modal and start scanning
+        function openBarcodeScanner() {
+            // Reset previous results
+            document.getElementById('scannerResult').textContent = '';
+            document.getElementById('productResult').textContent = '';
+            
+            // Show the scanner modal
+            document.getElementById('scannerModal').style.display = 'block';
+            
+            // Get video element
+            const videoElement = document.getElementById('video');
+            
+            // Create instance of the reader
+            codeReader = new window.BrowserMultiFormatReader();
+            
+            // Get available video devices
+            codeReader.listVideoInputDevices()
+                .then(videoInputDevices => {
+                    if (videoInputDevices.length === 0) {
+                        alert('No camera devices found');
+                        closeBarcodeScanner();
+                        return;
+                    }
+                    
+                    // Use first device by default
+                    const firstDeviceId = videoInputDevices[0].deviceId;
+                    
+                    // Start decoding from video device
+                    codeReader.decodeFromVideoDevice(firstDeviceId, videoElement, (result, error) => {
+                        if (result) {
+                            // Barcode found!
+                            const barcode = result.getText();
+                            document.getElementById('scannerResult').textContent = `Found barcode: ${barcode}`;
+                            
+                            // Look up product by barcode
+                            const product = products.find(p => p.barcode === barcode);
+                            if (product) {
+                                document.getElementById('productResult').innerHTML = `
+                                    <div class="alert alert-success mt-3">
+                                        <h4>${product.name}</h4>
+                                        <p>Price: ${product.price}</p>
+                                        <p>Stock: ${product.stock}</p>
+                                    </div>
+                                `;
+                                
+                                // Automatically stop scanning after finding a valid barcode
+                                closeBarcodeScanner();
+                            } else {
+                                // No product found with this barcode
+                                document.getElementById('productResult').innerHTML = `
+                                    <div class="alert alert-warning mt-3">
+                                        <p>Product with barcode ${barcode} not found</p>
+                                        <button class="btn btn-primary" onclick="assignBarcodeToNewProduct('${barcode}')">Create New Product</button>
+                                        <button class="btn btn-secondary" onclick="showBarcodeAssignmentModal('${barcode}')">Assign to Existing Product</button>
+                                    </div>
+                                `;
+                            }
+                        }
+                        
+                        if (error && !(error instanceof window.NotFoundException)) {
+                            // Only log critical errors, not the common "not found" errors
+                            console.error('ZXing error:', error);
+                        }
+                    });
+                })
+                .catch(err => {
+                    console.error('Error accessing camera:', err);
+                    alert('Error accessing camera: ' + err);
+                    closeBarcodeScanner();
+                });
+        }
+
+        // Function to close scanner and clean up
+        function closeBarcodeScanner() {
+            // Hide the scanner modal
+            document.getElementById('scannerModal').style.display = 'none';
+            
+            // Stop the scanner if it's running
+            if (codeReader) {
+                codeReader.reset();
+                codeReader = null;
+            }
+        }
+        
+        // Function to switch between available cameras
+        function switchCamera() {
+            if (!codeReader) return;
+            
+            // Get available cameras
+            codeReader.listVideoInputDevices()
+                .then(videoInputDevices => {
+                    availableCameras = videoInputDevices;
+                    
+                    if (availableCameras.length <= 1) {
+                        alert('Only one camera available');
+                        return;
+                    }
+                    
+                    // Reset the scanner
+                    codeReader.reset();
+                    
+                    // Switch to next camera
+                    currentCameraIndex = (currentCameraIndex + 1) % availableCameras.length;
+                    const nextDeviceId = availableCameras[currentCameraIndex].deviceId;
+                    
+                    // Get video element
+                    const videoElement = document.getElementById('video');
+                    
+                    // Start decoding from the new camera
+                    codeReader.decodeFromVideoDevice(nextDeviceId, videoElement, (result, error) => {
+                        if (result) {
+                            // Barcode found!
+                            const barcode = result.getText();
+                            document.getElementById('scannerResult').textContent = `Found barcode: ${barcode}`;
+                            
+                            // Look up product by barcode
+                            const product = products.find(p => p.barcode === barcode);
+                            if (product) {
+                                document.getElementById('productResult').innerHTML = `
+                                    <div class="alert alert-success mt-3">
+                                        <h4>${product.name}</h4>
+                                        <p>Price: ${product.price}</p>
+                                        <p>Stock: ${product.stock}</p>
+                                    </div>
+                                `;
+                                
+                                // Automatically stop scanning after finding a valid barcode
+                                closeBarcodeScanner();
+                            } else {
+                                // No product found with this barcode
+                                document.getElementById('productResult').innerHTML = `
+                                    <div class="alert alert-warning mt-3">
+                                        <p>Product with barcode ${barcode} not found</p>
+                                        <button class="btn btn-primary" onclick="assignBarcodeToNewProduct('${barcode}')">Create New Product</button>
+                                        <button class="btn btn-secondary" onclick="showBarcodeAssignmentModal('${barcode}')">Assign to Existing Product</button>
+                                    </div>
+                                `;
+                            }
+                        }
+                        
+                        if (error && !(error instanceof window.NotFoundException)) {
+                            // Only log critical errors, not the common "not found" errors
+                            console.error('ZXing error:', error);
+                        }
+                    });
+                    
+                    document.getElementById('scanner-status').textContent = `Using camera ${currentCameraIndex + 1} of ${availableCameras.length}`;
+                })
+                .catch(err => {
+                    console.error('Error accessing cameras:', err);
+                    alert('Error accessing cameras: ' + err);
+                });
         }
     </script>
 </body>
