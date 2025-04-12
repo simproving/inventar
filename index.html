@@ -473,11 +473,40 @@
             position: relative;
             color: var(--text-color);
         }
+        
+        .floor-plan-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        
+        .floor-plan-header h2 {
+            margin: 0;
+        }
+        
+        .floor-plan-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .save-btn {
+            background-color: var(--button-primary);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .save-btn:hover {
+            background-color: var(--button-primary-hover);
+        }
 
         .floor-plan-close {
-            position: absolute;
-            right: 20px;
-            top: 15px;
             font-size: 28px;
             font-weight: bold;
             cursor: pointer;
@@ -802,20 +831,34 @@
         
         .barcode-form {
             margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
         
-        .barcode-form input {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 15px;
+        .barcode-input-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .barcode-input-group input {
+            flex: 1;
+            padding: 8px;
             border: 1px solid var(--border-color);
             border-radius: 4px;
-            background-color: var(--container-bg);
-            color: var(--text-color);
         }
         
-        .barcode-form button {
-            width: 100%;
+        .scan-btn {
+            background-color: var(--button-secondary);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .scan-btn:hover {
+            background-color: var(--button-secondary-hover);
         }
 
         /* Settings Modal Styles */
@@ -1113,8 +1156,13 @@
     <!-- Floor Plan Modal -->
     <div id="floorPlanModal" class="floor-plan-modal">
         <div class="floor-plan-content">
-            <span class="floor-plan-close" onclick="closeFloorPlan()">&times;</span>
-            <h2>Floor Plan - <span id="floorPlanLocationName"></span></h2>
+            <div class="floor-plan-header">
+                <h2>Floor Plan - <span id="floorPlanLocationName"></span></h2>
+                <div class="floor-plan-header-actions">
+                    <button class="save-btn" onclick="saveFloorPlan()">Save Floor Plan</button>
+                    <span class="floor-plan-close" onclick="closeFloorPlan()">&times;</span>
+                </div>
+            </div>
             
             <div class="floor-plan-editor">
                 <div class="floor-plan-tools">
@@ -1140,7 +1188,6 @@
                 </div>
                 
                 <div class="floor-plan-actions">
-                    <button onclick="saveFloorPlan()">Save Floor Plan</button>
                     <button onclick="viewFloorPlan()">View Mode</button>
                 </div>
             </div>
@@ -1178,8 +1225,11 @@
             <p id="barcodeProductName"></p>
             
             <div class="barcode-form">
-                <input type="text" id="barcodeInput" placeholder="Enter barcode">
-                <button onclick="saveBarcode()">Save Barcode</button>
+                <div class="barcode-input-group">
+                    <input type="text" id="barcodeInput" placeholder="Enter barcode">
+                    <button class="scan-btn" onclick="scanBarcodeForProduct()"><i class="fas fa-camera"></i> Scan</button>
+                </div>
+                <button class="save-btn" onclick="saveBarcode()">Save Barcode</button>
             </div>
         </div>
     </div>
@@ -3875,6 +3925,103 @@
             document.getElementById('barcodeModal').style.display = 'none';
             currentBarcodeProductId = null;
         }
+        
+        // Function to scan a barcode for a product
+        function scanBarcodeForProduct() {
+            // Close the barcode modal temporarily
+            document.getElementById('barcodeModal').style.display = 'none';
+            
+            // Remember that we're scanning for a product
+            const scanningForProduct = true;
+            const productId = currentBarcodeProductId;
+            
+            // Show the scanner modal
+            document.getElementById('scannerModal').style.display = 'block';
+            
+            // Reset the results
+            document.getElementById('scannerResult').textContent = '';
+            document.getElementById('productResult').textContent = '';
+            
+            // Get video element
+            const videoElement = document.getElementById('video');
+            
+            // Create instance of the reader
+            codeReader = new window.BrowserMultiFormatReader();
+            
+            // Get available video devices
+            codeReader.listVideoInputDevices()
+                .then(videoInputDevices => {
+                    if (videoInputDevices.length === 0) {
+                        alert('No camera devices found');
+                        cancelBarcodeScanning();
+                        return;
+                    }
+                    
+                    // Use first device by default
+                    const firstDeviceId = videoInputDevices[0].deviceId;
+                    
+                    // Start decoding from video device
+                    codeReader.decodeFromVideoDevice(firstDeviceId, videoElement, (result, error) => {
+                        if (result) {
+                            // Barcode found!
+                            const barcode = result.getText();
+                            document.getElementById('scannerResult').textContent = `Found barcode: ${barcode}`;
+                            
+                            // Check if the barcode is already assigned to a different product
+                            const existingProduct = products.find(p => p.barcode === barcode && p.id !== productId);
+                            if (existingProduct) {
+                                document.getElementById('productResult').innerHTML = `
+                                    <div class="alert alert-warning mt-3">
+                                        <p>Barcode ${barcode} is already assigned to product "${existingProduct.name}"</p>
+                                        <button class="btn btn-primary" onclick="useScannedBarcodeForProduct('${barcode}')">Use Anyway</button>
+                                        <button class="btn btn-secondary" onclick="cancelBarcodeScanning()">Cancel</button>
+                                    </div>
+                                `;
+                            } else {
+                                // Use the barcode for the current product
+                                useScannedBarcodeForProduct(barcode);
+                            }
+                        }
+                        
+                        if (error && !(error instanceof window.NotFoundException)) {
+                            // Only log critical errors, not the common "not found" errors
+                            console.error('ZXing error:', error);
+                        }
+                    });
+                })
+                .catch(err => {
+                    console.error('Error accessing camera:', err);
+                    alert('Error accessing camera: ' + err);
+                    cancelBarcodeScanning();
+                });
+        }
+        
+        // Function to use a scanned barcode for a product
+        function useScannedBarcodeForProduct(barcode) {
+            // Close the scanner
+            closeBarcodeScanner();
+            
+            // Reopen the barcode modal
+            document.getElementById('barcodeModal').style.display = 'block';
+            
+            // Set the scanned barcode value in the input field
+            document.getElementById('barcodeInput').value = barcode;
+            
+            // Focus on the save button
+            setTimeout(() => {
+                const saveButton = document.querySelector('.barcode-form .save-btn');
+                if (saveButton) saveButton.focus();
+            }, 100);
+        }
+        
+        // Function to cancel barcode scanning and go back to the barcode modal
+        function cancelBarcodeScanning() {
+            // Close the scanner
+            closeBarcodeScanner();
+            
+            // Reopen the barcode modal
+            document.getElementById('barcodeModal').style.display = 'block';
+        }
 
         async function saveBarcode() {
             if (!currentBarcodeProductId) return;
@@ -3934,11 +4081,28 @@
             // Load users and locations lists
             updateUsersList();
             updateLocationsList();
+            
+            // Add click outside listener to close settings
+            window.addEventListener('click', closeSettingsOnClickOutside);
         }
         
         function closeSettings() {
             const modal = document.getElementById('settingsModal');
             modal.style.display = 'none';
+            
+            // Remove the click outside listener
+            window.removeEventListener('click', closeSettingsOnClickOutside);
+        }
+        
+        // Function to handle clicking outside the settings modal
+        function closeSettingsOnClickOutside(event) {
+            const modal = document.getElementById('settingsModal');
+            const content = document.querySelector('.settings-content');
+            
+            // If the click is on the modal background (not on the content)
+            if (event.target === modal) {
+                closeSettings();
+            }
         }
         
         function switchSettingsTab(tabName) {
