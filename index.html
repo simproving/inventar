@@ -1447,7 +1447,7 @@
                         name: 'Example Product',
                         price: 9.99,
                         comments: 'This is an example product to help you get started.',
-                        barcode: '1234567890', // Add barcode field with empty default value
+                        barcode: '1234567890', // Example barcode
                     };
                     products.push(exampleProduct);
                     
@@ -1713,8 +1713,7 @@
                     name, 
                     price,
                     comments: '',
-                    barcode: '', // Add barcode field with empty default value
-                    aliases: []
+                    barcode: '', 
                 };
                 products.push(product);
             }
@@ -2248,8 +2247,7 @@
                     (transaction.productName && transaction.productName.toLowerCase().includes(searchTerm)) || 
                     (transaction.productId && products.some(p => 
                         p.id === transaction.productId && 
-                            (p.name.toLowerCase().includes(searchTerm) || 
-                         (Array.isArray(p.aliases) && p.aliases.some(alias => alias.toLowerCase().includes(searchTerm))))
+                        p.name.toLowerCase().includes(searchTerm)
                     ))
                 ) : 
                 sortedTransactions;
@@ -2370,10 +2368,8 @@
             const filteredProducts = Object.values(productInventory).filter(entry => {
                 const product = entry.product;
                 const matchesName = product.name.toLowerCase().includes(searchTerm);
-                const matchesAlias = Array.isArray(product.aliases) && 
-                                    product.aliases.some(alias => alias.toLowerCase().includes(searchTerm));
                 const matchesBarcode = product.barcode && product.barcode.toLowerCase().includes(searchTerm);
-                return matchesName || matchesAlias || matchesBarcode;
+                return matchesName || matchesBarcode;
             });
             
             // Sort by name
@@ -3851,7 +3847,6 @@
                 price: 0,
                 comments: '',
                 barcode: barcode,
-                aliases: []
             };
             
             // Add to products array
