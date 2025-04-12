@@ -91,10 +91,16 @@ This inventory management system should prioritize usability, performance, and d
 
 WebRTC communication
 1. Device A (Offerer) creates a WebRTC offer and ICE candidates, encodes them in a QR code.
+ 1.1 Show the QR code on screen for device B to scan with it's camera
+ 1.2 Download the QR code file and send to device B
 
 2. Device B (Answerer) scans the QR, sets remote description, creates an answer and its own ICE candidates, and shows its own QR.
+ 2.1 Use camera to scan the QR code on Device A screen. Then create answer QR code and show it on screen
+ 2.2 Load the QR code file and scan from there. Then create answer QR code download file and send to device B
 
 3. Device A scans the answer QR to complete the handshake.
+ 3.1 Use camera to scan the QR code on Device B screen
+ 3.2 Load the QR code file received from Device B
 
 4. Once both ends set the descriptions and ICE candidates, they connect directly — no servers needed!
 

@@ -1157,7 +1157,7 @@
     <div id="floorPlanModal" class="floor-plan-modal">
         <div class="floor-plan-content">
             <div class="floor-plan-header">
-                <h2>Floor Plan - <span id="floorPlanLocationName"></span></h2>
+            <h2>Floor Plan - <span id="floorPlanLocationName"></span></h2>
                 <div class="floor-plan-header-actions">
                     <button class="save-btn" onclick="saveFloorPlan()">Save Floor Plan</button>
                     <span class="floor-plan-close" onclick="closeFloorPlan()">&times;</span>
@@ -1226,7 +1226,7 @@
             
             <div class="barcode-form">
                 <div class="barcode-input-group">
-                    <input type="text" id="barcodeInput" placeholder="Enter barcode">
+                <input type="text" id="barcodeInput" placeholder="Enter barcode">
                     <button class="scan-btn" onclick="scanBarcodeForProduct()"><i class="fas fa-camera"></i> Scan</button>
                 </div>
                 <button class="save-btn" onclick="saveBarcode()">Save Barcode</button>
@@ -1312,6 +1312,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/idb@8/build/umd.js"></script>
     <script src="https://unpkg.com/konva@9/konva.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js"></script>
     <script type="module">
         import { BrowserMultiFormatReader, NotFoundException } from 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/+esm';
         window.BrowserMultiFormatReader = BrowserMultiFormatReader;
@@ -1760,8 +1761,8 @@
             if (!product) {
                 product = { 
                     id: Date.now().toString(),
-                    name, 
-                    price,
+                name, 
+                price,
                     comments: '',
                     barcode: '', 
                 };
@@ -3774,7 +3775,7 @@
         // Add barcode assignment functions
         let currentBarcodeProductId = null;
         let currentScannedBarcode = null;
-
+        
         function openBarcodeModal(productId) {
             const product = products.find(p => p.id === productId);
             if (!product) return;
@@ -3920,7 +3921,7 @@
             // Show success message
             alert(`New product created with barcode ${barcode}. Please update the details.`);
         }
-
+        
         function closeBarcodeModal() {
             document.getElementById('barcodeModal').style.display = 'none';
             currentBarcodeProductId = null;
@@ -4022,7 +4023,7 @@
             // Reopen the barcode modal
             document.getElementById('barcodeModal').style.display = 'block';
         }
-
+        
         async function saveBarcode() {
             if (!currentBarcodeProductId) return;
             
