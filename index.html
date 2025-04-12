@@ -4292,16 +4292,7 @@
                             // Look up product by barcode
                             const product = products.find(p => p.barcode === barcode);
                             if (product) {
-                                document.getElementById('productResult').innerHTML = `
-                                    <div class="alert alert-success mt-3">
-                                        <h4>${product.name}</h4>
-                                        <p>Price: ${product.price}</p>
-                                        <p>Stock: ${product.stock}</p>
-                                    </div>
-                                `;
-                                
-                                // Automatically stop scanning after finding a valid barcode
-                                closeBarcodeScanner();
+                                handleProductFoundByBarcode(product);
                             } else {
                                 // No product found with this barcode
                                 document.getElementById('productResult').innerHTML = `
@@ -4373,16 +4364,7 @@
                             // Look up product by barcode
                             const product = products.find(p => p.barcode === barcode);
                             if (product) {
-                                document.getElementById('productResult').innerHTML = `
-                                    <div class="alert alert-success mt-3">
-                                        <h4>${product.name}</h4>
-                                        <p>Price: ${product.price}</p>
-                                        <p>Stock: ${product.stock}</p>
-                                    </div>
-                                `;
-                                
-                                // Automatically stop scanning after finding a valid barcode
-                                closeBarcodeScanner();
+                                handleProductFoundByBarcode(product);
                             } else {
                                 // No product found with this barcode
                                 document.getElementById('productResult').innerHTML = `
@@ -4407,6 +4389,27 @@
                     console.error('Error accessing cameras:', err);
                     alert('Error accessing cameras: ' + err);
                 });
+        }
+
+        // Handle product found by barcode
+        function handleProductFoundByBarcode(product) {
+            // Display product info
+            document.getElementById('productResult').innerHTML = `
+                <div class="alert alert-success mt-3">
+                    <h4>${product.name}</h4>
+                    <p>Price: ${product.price}</p>
+                    <p>Stock: ${product.stock}</p>
+                </div>
+            `;
+            
+            // Set the product name in the search bar
+            document.getElementById('searchInput').value = product.name;
+            
+            // Automatically stop scanning after finding a valid barcode
+            closeBarcodeScanner();
+            
+            // Update the table to show filtered results
+            updateTable();
         }
     </script>
 </body>
