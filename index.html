@@ -5,6 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inventory System</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .highlight-row {
+            animation: highlight 2s ease-out;
+        }
+        
+        @keyframes highlight {
+            0% { background-color: rgba(255, 255, 0, 0.5); }
+            100% { background-color: transparent; }
+        }
+        .zoom-controls {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-left: 10px;
+            background-color: var(--highlight-bg);
+            padding: 5px;
+            border-radius: 4px;
+        }
+
+        .zoom-button {
+            padding: 4px 8px;
+            background-color: var(--button-secondary);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+        }
+
+        .zoom-button:hover {
+            background-color: var(--button-secondary-hover);
+        }
+
+        #zoomLevel {
+            min-width: 60px;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -81,6 +120,12 @@
                     <button class="shape-button" data-tool="text" onclick="selectTool('text')">Text</button>
                     <button class="shape-button" data-tool="delete" onclick="selectTool('delete')">Delete</button>
                     <input type="color" class="color-picker" id="shapeColor" value="#CCCCCC">
+                    <div class="zoom-controls">
+                        <button onclick="zoomFloorPlan(-0.1)" class="zoom-button">-</button>
+                        <span id="zoomLevel">100%</span>
+                        <button onclick="zoomFloorPlan(0.1)" class="zoom-button">+</button>
+                        <button onclick="resetZoom()" class="zoom-button">Reset</button>
+                    </div>
                     <div style="flex-grow: 1;"></div>
                     <button onclick="clearFloorPlan()">Clear All</button>
                 </div>
@@ -1454,6 +1499,9 @@
         let layer;
         let transformer;
         let konvaShapes = [];
+        let currentZoom = 1;
+        let isDraggingStage = false;
+        let lastPointerPosition = null;
 
         function openFloorPlan() {
             const modal = document.getElementById('floorPlanModal');
@@ -1518,6 +1566,105 @@
             });
             layer.add(transformer);
             
+            // Add wheel event listener for zooming
+            stage.on('wheel', (e) => {
+                e.evt.preventDefault();
+                
+                const oldScale = stage.scaleX();
+                const pointer = stage.getPointerPosition();
+                
+                const mousePointTo = {
+                    x: (pointer.x - stage.x()) / oldScale,
+                    y: (pointer.y - stage.y()) / oldScale,
+                };
+                
+                // Calculate new scale
+                const newScale = e.evt.deltaY < 0 ? oldScale * 1.1 : oldScale / 1.1;
+                
+                // Limit zoom level between 0.1 and 3
+                if (newScale >= 0.1 && newScale <= 3) {
+                    stage.scale({ x: newScale, y: newScale });
+                    
+                    const newPos = {
+                        x: pointer.x - mousePointTo.x * newScale,
+                        y: pointer.y - mousePointTo.y * newScale,
+                    };
+                    
+                    stage.position(newPos);
+                    stage.batchDraw();
+                    
+                    // Update zoom level display
+                    currentZoom = Math.round(newScale * 100);
+                    document.getElementById('zoomLevel').textContent = `${currentZoom}%`;
+                }
+            });
+
+            // Add mouse events for stage dragging
+            stage.on('mousedown', (e) => {
+                // Don't start dragging if clicking on a shape or transformer
+                if (e.target !== stage && e.target !== layer) {
+                    return;
+                }
+
+                // Only enable dragging if:
+                // 1. We're in view mode (not edit mode), or
+                // 2. The user is holding the shift key (for edit mode)
+                if (!isEditMode || (isEditMode && e.evt.shiftKey)) {
+                    isDraggingStage = true;
+                    lastPointerPosition = stage.getPointerPosition();
+                    document.body.style.cursor = 'grabbing';
+                }
+            });
+
+            stage.on('mousemove', (e) => {
+                if (!isDraggingStage) {
+                    // Update cursor based on mode and shift key
+                    if (!isEditMode || (isEditMode && e.evt.shiftKey)) {
+                        document.body.style.cursor = 'grab';
+                    } else {
+                        document.body.style.cursor = 'default';
+                    }
+                    return;
+                }
+
+                if (!lastPointerPosition) {
+                    return;
+                }
+
+                e.evt.preventDefault();
+                const pos = stage.getPointerPosition();
+                const dx = pos.x - lastPointerPosition.x;
+                const dy = pos.y - lastPointerPosition.y;
+
+                // Move the stage
+                stage.position({
+                    x: stage.x() + dx,
+                    y: stage.y() + dy
+                });
+                stage.batchDraw();
+
+                lastPointerPosition = pos;
+            });
+
+            stage.on('mouseup', () => {
+                isDraggingStage = false;
+                lastPointerPosition = null;
+                document.body.style.cursor = isEditMode ? 'default' : 'grab';
+            });
+
+            // Add keyboard event listener for shift key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Shift' && isEditMode) {
+                    document.body.style.cursor = 'grab';
+                }
+            });
+
+            document.addEventListener('keyup', (e) => {
+                if (e.key === 'Shift' && isEditMode) {
+                    document.body.style.cursor = 'default';
+                }
+            });
+            
             // Ensure the layer is drawn
             layer.draw();
             
@@ -1528,11 +1675,8 @@
         }
         
         function setupKonvaEvents() {
-            // Clear any existing event listeners
+            // Clear only the click event listener, preserve stage dragging events
             stage.off('click');
-            stage.off('mousedown');
-            stage.off('mousemove');
-            stage.off('mouseup');
             
             // Stage click handler for selection
             stage.on('click', function(e) {
@@ -1604,11 +1748,16 @@
                 }
             });
             
-            // Handle drawing new shapes
-            stage.on('mousedown', function(e) {
-                console.log("Mouse down, current tool:", currentTool, "isEditMode:", isEditMode);
+            // Add drawing-specific event handlers that work alongside stage dragging
+            // We'll use different event names to avoid conflicts
+            stage.on('mousedown.draw', function(e) {
+                console.log("Drawing mouse down, current tool:", currentTool, "isEditMode:", isEditMode);
                 
+                // Only handle drawing if we're in edit mode and using a drawing tool
                 if (currentTool === 'select' || !isEditMode) return;
+                
+                // Don't start drawing if we're clicking on a shape (let the stage dragging handle it)
+                if (e.target !== stage && e.target !== layer) return;
                 
                 isDrawing = true;
                 const pos = stage.getPointerPosition();
@@ -1695,7 +1844,7 @@
             });
             
             // Handle mouse move for drawing
-            stage.on('mousemove', function(e) {
+            stage.on('mousemove.draw', function(e) {
                 if (!isDrawing || !selectedShape) return;
                 
                 const pos = stage.getPointerPosition();
@@ -1724,8 +1873,8 @@
             });
             
             // Handle mouse up for finishing drawing
-            stage.on('mouseup', function() {
-                console.log("Mouse up detected, isDrawing:", isDrawing, "currentTool:", currentTool);
+            stage.on('mouseup.draw', function() {
+                console.log("Drawing mouse up detected, isDrawing:", isDrawing, "currentTool:", currentTool);
                 
                 // Only handle shape completion if we're in drawing mode
                 if (!isDrawing) return;
@@ -2267,6 +2416,9 @@
                 if (!isEditMode) {
                     transformer.nodes([]);
                     selectedShape = null;
+                    document.body.style.cursor = 'grab';
+                } else {
+                    document.body.style.cursor = 'default';
                 }
                 
                 // Update Konva shapes and product groups
@@ -3678,6 +3830,48 @@
             // Check for pending invoices
             checkPendingInvoices();
         });
+
+        function zoomFloorPlan(delta) {
+            const oldScale = stage.scaleX();
+            const newScale = oldScale + delta;
+            
+            // Limit zoom level between 0.1 and 3
+            if (newScale >= 0.1 && newScale <= 3) {
+                const center = {
+                    x: stage.width() / 2,
+                    y: stage.height() / 2
+                };
+                
+                const mousePointTo = {
+                    x: (center.x - stage.x()) / oldScale,
+                    y: (center.y - stage.y()) / oldScale,
+                };
+                
+                stage.scale({ x: newScale, y: newScale });
+                
+                const newPos = {
+                    x: center.x - mousePointTo.x * newScale,
+                    y: center.y - mousePointTo.y * newScale,
+                };
+                
+                stage.position(newPos);
+                stage.batchDraw();
+                
+                // Update zoom level display
+                currentZoom = Math.round(newScale * 100);
+                document.getElementById('zoomLevel').textContent = `${currentZoom}%`;
+            }
+        }
+
+        function resetZoom() {
+            stage.scale({ x: 1, y: 1 });
+            stage.position({ x: 0, y: 0 });
+            stage.batchDraw();
+            
+            // Update zoom level display
+            currentZoom = 100;
+            document.getElementById('zoomLevel').textContent = `${currentZoom}%`;
+        }
 
     </script>
 </body>
