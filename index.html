@@ -29,6 +29,7 @@
         <div class="search-container">
             <input type="text" id="searchInput" placeholder="Search items...">
         </div>
+        <div id="totalFoundContainer" style="margin-left: 10px; margin-bottom: 10px; font-size: 1em; color: #555;"></div>
         <div id="locationFilterButtons" class="location-filter-buttons"></div>
 
         <div id="pendingInvoices" class="pending-invoices">
@@ -1383,6 +1384,12 @@
                 const showInLocation = locationFilter ? (entry.quantities[locationFilter] > 0) : true;
                 return (matchesName || matchesBarcode) && showInLocation;
             });
+            // --- Sum total quantities for filtered products ---
+            const totalFound = filteredProducts.reduce((sum, entry) => sum + entry.totalQuantity, 0);
+            const totalFoundContainer = document.getElementById('totalFoundContainer');
+            if (totalFoundContainer) {
+                totalFoundContainer.textContent = `Total found: ${totalFound}`;
+            }
             // --- Sort by selected column and direction ---
             filteredProducts.sort((a, b) => {
                 let valA, valB;
