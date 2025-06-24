@@ -31,6 +31,7 @@
         <div class="search-container">
             <input type="text" id="searchInput" placeholder="Search items...">
         </div>
+        <div id="locationFilterButtons" class="location-filter-buttons"></div>
 
         <div id="pendingInvoices" class="pending-invoices">
             <h2>Pending Invoices</h2>
@@ -246,6 +247,7 @@
         let currentUserId = '';
         let db;
         let currentTheme = localStorage.getItem('theme') || 'light';
+        let locationFilter = null; // null = all, or location id
 
         // Set up theme on initial load
         function applyTheme() {
@@ -570,6 +572,7 @@
                 currentLocation = locations[0].id;
                 select.value = currentLocation;
             }
+            renderLocationFilterButtons();
         }
 
         function changeLocation(selectedLocationId) {
@@ -1353,12 +1356,14 @@
                     productInventory[item.productId].totalQuantity += item.quantity;
                 }
             });
-            // Filter by search term
+            // Filter by search term and locationFilter
             const filteredProducts = Object.values(productInventory).filter(entry => {
                 const product = entry.product;
                 const matchesName = product.name.toLowerCase().includes(searchTerm);
                 const matchesBarcode = product.barcode && product.barcode.toLowerCase().includes(searchTerm);
-                return matchesName || matchesBarcode;
+                // Only show if product has quantity in selected location
+                const showInLocation = locationFilter ? (entry.quantities[locationFilter] > 0) : true;
+                return (matchesName || matchesBarcode) && showInLocation;
             });
             // --- Sort by selected column and direction ---
             filteredProducts.sort((a, b) => {
@@ -1478,6 +1483,14 @@
                 console.error('Error during initialization:', error);
                 alert('Failed to initialize the application. Please refresh the page or check console for details.');
             });
+            // Set initial filter
+            setTimeout(() => {
+                if (locations && locations.length > 0) {
+                    locationFilter = locations[0].id;
+                    renderLocationFilterButtons();
+                    updateTable();
+                }
+            }, 500);
         });
 
         // Floor Plan functionality
@@ -3870,6 +3883,25 @@
             // Update zoom level display
             currentZoom = 100;
             document.getElementById('zoomLevel').textContent = `${currentZoom}%`;
+        }
+
+        // Render location filter buttons
+        function renderLocationFilterButtons() {
+            const container = document.getElementById('locationFilterButtons');
+            if (!container) return;
+            container.innerHTML = '';
+            if (!locations || locations.length === 0) return;
+            locations.forEach(loc => {
+                const btn = document.createElement('button');
+                btn.textContent = loc.name;
+                btn.className = 'location-filter-btn' + (locationFilter === loc.id ? ' selected' : '');
+                btn.onclick = () => {
+                    locationFilter = loc.id;
+                    renderLocationFilterButtons();
+                    updateTable();
+                };
+                container.appendChild(btn);
+            });
         }
 
     </script>

@@ -1230,3 +1230,39 @@ input:checked + .theme-toggle-slider:before {
     text-align: center;
     font-weight: bold;
 }
+
+.location-filter-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+}
+.location-filter-btn {
+    background-color: #ccc;
+    color: #333;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 18px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    font-weight: 500;
+}
+.location-filter-btn.selected {
+    background-color: var(--button-primary);
+    color: #fff;
+}
+.location-filter-btn:hover {
+    background-color: #bbb;
+}
+@media (max-width: 600px) {
+    .location-filter-buttons {
+        flex-direction: column;
+        gap: 8px;
+    }
+    .location-filter-btn {
+        width: 100%;
+        text-align: left;
+    }
+}
