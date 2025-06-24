@@ -42,6 +42,7 @@
             <input type="text" id="itemName" placeholder="Item Name">
             <input type="number" id="itemQuantity" placeholder="Quantity">
             <input type="number" id="itemPrice" placeholder="Price">
+            <select id="addItemLocationSelect"></select>
             <button onclick="addItem()">Add Item</button>
         </div>
 
@@ -567,6 +568,20 @@
                 select.appendChild(option);
             });
 
+            // Update add-item location selector
+            const addItemLocationSelect = document.getElementById('addItemLocationSelect');
+            if (addItemLocationSelect) {
+                addItemLocationSelect.innerHTML = '';
+                locations.forEach(location => {
+                    const option = document.createElement('option');
+                    option.value = location.id;
+                    option.textContent = location.name;
+                    addItemLocationSelect.appendChild(option);
+                });
+                // Optionally, select the currentLocation by default
+                addItemLocationSelect.value = currentLocation;
+            }
+
             // If no location is selected, select the first one
             if (!currentLocation && locations.length > 0) {
                 currentLocation = locations[0].id;
@@ -667,6 +682,7 @@
             const name = document.getElementById('itemName').value.trim();
             const quantity = parseInt(document.getElementById('itemQuantity').value);
             const price = parseFloat(document.getElementById('itemPrice').value);
+            const locationId = document.getElementById('addItemLocationSelect').value || currentLocation;
 
             if (!name || isNaN(quantity) || isNaN(price) || quantity < 0 || price < 0) {
                 alert('Please fill all fields with valid values');
@@ -679,8 +695,8 @@
             if (!product) {
                 product = { 
                     id: Date.now().toString(),
-                name, 
-                price,
+                    name, 
+                    price,
                     comments: '',
                     barcode: '', 
                 };
@@ -689,7 +705,7 @@
             
             // Check if inventory entry exists
             let inventoryEntry = inventoryItems.find(item => 
-                item.productId === product.id && item.locationId === currentLocation
+                item.productId === product.id && item.locationId === locationId
             );
             
             if (inventoryEntry) {
@@ -697,21 +713,21 @@
                 const oldQuantity = inventoryEntry.quantity;
                 inventoryEntry.quantity += quantity;
                 
-            await addToHistory({
+                await addToHistory({
                     type: 'update_quantity',
                     productId: product.id,
                     productName: product.name,
-                    locationId: currentLocation,
+                    locationId: locationId,
                     oldQuantity,
                     newQuantity: inventoryEntry.quantity,
-                timestamp: new Date().toISOString()
-            });
+                    timestamp: new Date().toISOString()
+                });
             } else {
                 // Create new inventory entry
                 inventoryEntry = {
                     id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
                     productId: product.id,
-                    locationId: currentLocation,
+                    locationId: locationId,
                     quantity
                 };
                 
@@ -721,7 +737,7 @@
                     type: 'add_inventory',
                     productId: product.id,
                     productName: product.name,
-                    locationId: currentLocation,
+                    locationId: locationId,
                     quantity,
                     timestamp: new Date().toISOString()
                 });
