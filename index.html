@@ -47,9 +47,9 @@
         <table id="inventoryTable">
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Quantity</th>
-                    <th>Price</th>
+                    <th id="thName" onclick="setSort('name')">Name <span id="sortIconName"></span></th>
+                    <th id="thQuantity" onclick="setSort('quantity')">Quantity <span id="sortIconQuantity"></span></th>
+                    <th id="thPrice" onclick="setSort('price')">Price <span id="sortIconPrice"></span></th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -1298,6 +1298,34 @@
             updateTable();
             updateHistory(); // Also update history when search input changes
         });
+                // --- Sorting State ---
+                let sortColumn = 'name';
+        let sortDirection = 'asc'; // 'asc' or 'desc'
+
+        function setSort(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            updateTable();
+        }
+
+        function updateSortIcons() {
+            const icons = {
+                name: document.getElementById('sortIconName'),
+                quantity: document.getElementById('sortIconQuantity'),
+                price: document.getElementById('sortIconPrice')
+            };
+            Object.keys(icons).forEach(col => {
+                if (sortColumn === col) {
+                    icons[col].textContent = sortDirection === 'asc' ? '▲' : '▼';
+                } else {
+                    icons[col].textContent = '';
+                }
+            });
+        }
 
         // Initial load
         updateLocationSelect();
@@ -1307,21 +1335,17 @@
         function updateTable() {
             const tbody = document.getElementById('inventoryBody');
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            
             tbody.innerHTML = '';
-            
             // Get products with inventory in any location (for total quantities)
             const productInventory = {};
-            
             // Initialize with all products
             products.forEach(product => {
                 productInventory[product.id] = {
                     product,
-                        quantities: {},
+                    quantities: {},
                     totalQuantity: 0
                 };
             });
-            
             // Add quantities from inventory
             inventoryItems.forEach(item => {
                 if (productInventory[item.productId]) {
@@ -1329,7 +1353,6 @@
                     productInventory[item.productId].totalQuantity += item.quantity;
                 }
             });
-            
             // Filter by search term
             const filteredProducts = Object.values(productInventory).filter(entry => {
                 const product = entry.product;
@@ -1337,10 +1360,25 @@
                 const matchesBarcode = product.barcode && product.barcode.toLowerCase().includes(searchTerm);
                 return matchesName || matchesBarcode;
             });
-            
-            // Sort by name
-            filteredProducts.sort((a, b) => a.product.name.localeCompare(b.product.name));
-            
+            // --- Sort by selected column and direction ---
+            filteredProducts.sort((a, b) => {
+                let valA, valB;
+                if (sortColumn === 'name') {
+                    valA = a.product.name.toLowerCase();
+                    valB = b.product.name.toLowerCase();
+                } else if (sortColumn === 'quantity') {
+                    valA = a.totalQuantity;
+                    valB = b.totalQuantity;
+                } else if (sortColumn === 'price') {
+                    valA = a.product.price;
+                    valB = b.product.price;
+                }
+                if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+                if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+            // Update sort icons
+            updateSortIcons();
             // Display the products
             filteredProducts.forEach(entry => {
                 const product = entry.product;
