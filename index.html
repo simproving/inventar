@@ -12,19 +12,17 @@
         
         <div class="top-actions">
             <div class="user-select">
-                <span>Current User: </span>
-                <select id="userSelect" onchange="changeUser(this.value)">
-                </select>
+                <span data-i18n="Current User:">Current User: </span>
+                <select id="userSelect" onchange="changeUser(this.value)"></select>
             </div>
             <div class="location-select">
-                <span>Current Location: </span>
-                <select id="locationSelect" onchange="changeLocation(this.value)">
-                </select>
-                <button onclick="openFloorPlan()" class="floor-plan-button">Floor Plan</button>
+                <span data-i18n="Current Location:">Current Location: </span>
+                <select id="locationSelect" onchange="changeLocation(this.value)"></select>
+                <button onclick="openFloorPlan()" class="floor-plan-button" data-i18n="Floor Plan">Floor Plan</button>
             </div>
             <div class="data-actions">
-                <button onclick="openBarcodeScanner()">Scan Barcode</button>
-                <button onclick="openSettings()">⚙️ Settings</button>
+                <button onclick="openBarcodeScanner()" data-i18n="Scan Barcode">Scan Barcode</button>
+                <button onclick="openSettings()">⚙️ <span data-i18n="Settings">Settings</span></button>
             </div>
         </div>
 
@@ -77,20 +75,20 @@
             
             <div class="floor-plan-editor">
                 <div class="floor-plan-tools">
-                    <button class="shape-button active" data-tool="select" onclick="selectTool('select')">Select</button>
-                    <button class="shape-button" data-tool="rectangle" onclick="selectTool('rectangle')">Rectangle</button>
-                    <button class="shape-button" data-tool="circle" onclick="selectTool('circle')">Circle</button>
-                    <button class="shape-button" data-tool="text" onclick="selectTool('text')">Text</button>
-                    <button class="shape-button" data-tool="delete" onclick="selectTool('delete')">Delete</button>
+                    <button class="shape-button active" data-tool="select" onclick="selectTool('select')" data-i18n="Select">Select</button>
+                    <button class="shape-button" data-tool="rectangle" onclick="selectTool('rectangle')" data-i18n="Rectangle">Rectangle</button>
+                    <button class="shape-button" data-tool="circle" onclick="selectTool('circle')" data-i18n="Circle">Circle</button>
+                    <button class="shape-button" data-tool="text" onclick="selectTool('text')" data-i18n="Text">Text</button>
+                    <button class="shape-button" data-tool="delete" onclick="selectTool('delete')" data-i18n="Delete Floor Plan">Delete</button>
                     <input type="color" class="color-picker" id="shapeColor" value="#CCCCCC">
                     <div class="zoom-controls">
                         <button onclick="zoomFloorPlan(-0.1)" class="zoom-button">-</button>
                         <span id="zoomLevel">100%</span>
                         <button onclick="zoomFloorPlan(0.1)" class="zoom-button">+</button>
-                        <button onclick="resetZoom()" class="zoom-button">Reset</button>
+                        <button onclick="resetZoom()" class="zoom-button" data-i18n="Reset">Reset</button>
                     </div>
                     <div style="flex-grow: 1;"></div>
-                    <button onclick="clearFloorPlan()">Clear All</button>
+                    <button onclick="clearFloorPlan()" data-i18n="Clear All">Clear All</button>
                 </div>
                 
                 <div class="floor-plan-canvas-container">
@@ -99,13 +97,13 @@
                 </div>
                 
                 <div class="product-placement-panel">
-                    <h3>Place Products on Floor Plan</h3>
-                    <p>Drag products onto the floor plan to show their locations</p>
+                    <h3 data-i18n="Place Products on Floor Plan">Place Products on Floor Plan</h3>
+                    <p data-i18n="Drag products onto the floor plan to show their locations">Drag products onto the floor plan to show their locations</p>
                     <div class="product-placement-list" id="productList"></div>
                 </div>
                 
                 <div class="floor-plan-actions">
-                    <button onclick="viewFloorPlan()">View Mode</button>
+                    <button onclick="viewFloorPlan()" data-i18n="View Mode">View Mode</button>
                 </div>
             </div>
         </div>
@@ -115,7 +113,7 @@
     <div id="scannerModal" class="scanner-modal">
         <div class="scanner-content">
             <span class="scanner-close" onclick="closeBarcodeScanner()">&times;</span>
-            <h2>Scan Barcode</h2>
+            <h2 data-i18n="Scan Barcode">Scan Barcode</h2>
             
             <div id="scanner-container">
                 <video id="video" autoplay playsinline></video>
@@ -125,11 +123,11 @@
             <div id="scannerResult" class="scanner-result"></div>
             <div id="productResult" class="product-result"></div>
             
-            <div class="scanner-status" id="scanner-status">Ready to scan...</div>
+            <div class="scanner-status" id="scanner-status" data-i18n="Ready to scan...">Ready to scan...</div>
             
             <div class="scanner-buttons">
-                <button onclick="switchCamera()" class="switch-camera">Switch Camera</button>
-                <button onclick="closeBarcodeScanner()">Close</button>
+                <button onclick="switchCamera()" class="switch-camera" data-i18n="Switch Camera">Switch Camera</button>
+                <button onclick="closeBarcodeScanner()" data-i18n="Close">Close</button>
             </div>
         </div>
     </div>
@@ -138,15 +136,15 @@
     <div id="barcodeModal" class="barcode-modal">
         <div class="barcode-content">
             <span class="barcode-close" onclick="closeBarcodeModal()">&times;</span>
-            <h2>Assign Barcode</h2>
+            <h2 data-i18n="Assign Barcode">Assign Barcode</h2>
             <p id="barcodeProductName"></p>
             
             <div class="barcode-form">
                 <div class="barcode-input-group">
-                <input type="text" id="barcodeInput" placeholder="Enter barcode">
-                    <button class="scan-btn" onclick="scanBarcodeForProduct()"><i class="fas fa-camera"></i> Scan</button>
+                    <input type="text" id="barcodeInput" placeholder="Enter barcode" data-i18n-placeholder="Enter barcode">
+                    <button class="scan-btn" onclick="scanBarcodeForProduct()"><i class="fas fa-camera"></i> <span data-i18n="Scan">Scan</span></button>
                 </div>
-                <button class="save-btn" onclick="saveBarcode()">Save Barcode</button>
+                <button class="save-btn" onclick="saveBarcode()" data-i18n="Save Barcode">Save Barcode</button>
             </div>
         </div>
     </div>
@@ -155,7 +153,7 @@
     <div id="settingsModal" class="settings-modal">
         <div class="settings-content">
             <span class="settings-close" onclick="closeSettings()">&times;</span>
-            <h2>Settings</h2>
+            <h2 data-i18n="Settings">Settings</h2>
             
             <div class="settings-tabs">
                 <button class="settings-tab active" onclick="switchSettingsTab('theme')" data-i18n="settings_theme">Theme</button>
@@ -165,9 +163,9 @@
             </div>
             
             <div id="themeSettings" class="settings-panel active">
-                <h3>Theme Settings</h3>
+                <h3 data-i18n="Theme Settings">Theme Settings</h3>
                 <div class="settings-item">
-                    <label>Dark Mode</label>
+                    <label data-i18n="Dark Mode">Dark Mode</label>
                     <div class="theme-toggle-container">
                         <label class="theme-toggle-label">🌙</label>
                         <label class="theme-toggle">
@@ -179,48 +177,48 @@
             </div>
             
             <div id="dataSettings" class="settings-panel">
-                <h3>Data Management</h3>
+                <h3 data-i18n="Data Management">Data Management</h3>
                 <div class="settings-item">
-                    <label>Export Data</label>
-                    <button onclick="exportData()">Export to JSON</button>
+                    <label data-i18n="Export Data">Export Data</label>
+                    <button onclick="exportData()" data-i18n="Export to JSON">Export to JSON</button>
                 </div>
                 <div class="settings-item">
-                    <label>Import Data</label>
-                    <button onclick="importData()">Import from JSON</button>
+                    <label data-i18n="Import Data">Import Data</label>
+                    <button onclick="importData()" data-i18n="Import from JSON">Import from JSON</button>
                     <input type="file" id="settingsImportFile" accept=".json" style="display: none;" onchange="handleImportFile(event)">
                 </div>
                 <div class="settings-item">
-                    <label>Clear All Data</label>
-                    <button onclick="confirmClearData()" class="danger-btn">Clear Database</button>
+                    <label data-i18n="Clear All Data">Clear All Data</label>
+                    <button onclick="confirmClearData()" class="danger-btn" data-i18n="Clear Database">Clear Database</button>
                 </div>
             </div>
             
             <div id="usersSettings" class="settings-panel">
-                <h3>User Management</h3>
+                <h3 data-i18n="User Management">User Management</h3>
                 <div class="settings-item">
-                    <label>Add New User</label>
+                    <label data-i18n="Add New User">Add New User</label>
                     <div class="settings-input-group">
-                        <input type="text" id="newUserName" placeholder="User Name">
-                        <button onclick="addUserFromSettings()">Add</button>
+                        <input type="text" id="newUserName" placeholder="User Name" data-i18n-placeholder="User Name">
+                        <button onclick="addUserFromSettings()" data-i18n="Add">Add</button>
                     </div>
                 </div>
                 <div class="settings-item">
-                    <label>Existing Users</label>
+                    <label data-i18n="Existing Users">Existing Users</label>
                     <div id="usersList" class="settings-list"></div>
                 </div>
             </div>
             
             <div id="locationsSettings" class="settings-panel">
-                <h3>Location Management</h3>
+                <h3 data-i18n="Location Management">Location Management</h3>
                 <div class="settings-item">
-                    <label>Add New Location</label>
+                    <label data-i18n="Add New Location">Add New Location</label>
                     <div class="settings-input-group">
-                        <input type="text" id="newLocationName" placeholder="Location Name">
-                        <button onclick="addLocationFromSettings()">Add</button>
+                        <input type="text" id="newLocationName" placeholder="Location Name" data-i18n-placeholder="Location Name">
+                        <button onclick="addLocationFromSettings()" data-i18n="Add">Add</button>
                     </div>
                 </div>
                 <div class="settings-item">
-                    <label>Existing Locations</label>
+                    <label data-i18n="Existing Locations">Existing Locations</label>
                     <div id="locationsList" class="settings-list"></div>
                 </div>
             </div>
@@ -3228,11 +3226,11 @@
                 const isCurrentUser = user.name === currentUser;
                 
                 listItem.innerHTML = `
-                    <span>${user.name}${isCurrentUser ? ' (Current)' : ''}</span>
+                    <span>${user.name}${isCurrentUser ? ' <span data-i18n="(Current)">(Current)</span>' : ''}</span>
                     <div class="item-actions">
                         ${!isCurrentUser ? `
-                            <button onclick="renameUserFromSettings('${user.id}')">Rename</button>
-                            <button onclick="deleteUserFromSettings('${user.id}')" class="danger-btn">Delete</button>
+                            <button onclick="renameUserFromSettings('${user.id}')" data-i18n="Rename">Rename</button>
+                            <button onclick="deleteUserFromSettings('${user.id}')" class="danger-btn" data-i18n="Delete">Delete</button>
                         ` : ''}
                     </div>
                 `;
@@ -3252,11 +3250,11 @@
                 const isCurrentLocation = location.id === currentLocation;
                 
                 listItem.innerHTML = `
-                    <span>${location.name}${isCurrentLocation ? ' (Current)' : ''}</span>
+                    <span>${location.name}${isCurrentLocation ? ' <span data-i18n="(Current)">(Current)</span>' : ''}</span>
                     <div class="item-actions">
                         ${!isCurrentLocation ? `
-                            <button onclick="renameLocationFromSettings('${location.id}')">Rename</button>
-                            <button onclick="deleteLocationFromSettings('${location.id}')" class="danger-btn">Delete</button>
+                            <button onclick="renameLocationFromSettings('${location.id}')" data-i18n="Rename">Rename</button>
+                            <button onclick="deleteLocationFromSettings('${location.id}')" class="danger-btn" data-i18n="Delete">Delete</button>
                         ` : ''}
                     </div>
                 `;
@@ -3975,7 +3973,26 @@
                 'Add Barcode': 'Add Barcode',
                 'Total:': 'Total:',
                 'Comments:': 'Comments:',
-                'No matching history items found.': 'No matching history items found.'
+                'No matching history items found.': 'No matching history items found.',
+                'Select': 'Select',
+                'Rectangle': 'Rectangle',
+                'Circle': 'Circle',
+                'Text': 'Text',
+                'Delete Floor Plan': 'Delete Floor Plan',
+                'Reset': 'Reset',
+                'Clear All': 'Clear All',
+                'Place Products on Floor Plan': 'Place Products on Floor Plan',
+                'Drag products onto the floor plan to show their locations': 'Drag products onto the floor plan to show their locations',
+                'View Mode': 'View Mode',
+                'Ready to scan...': 'Ready to scan...',
+                'Switch Camera': 'Switch Camera',
+                'Close': 'Close',
+                'Assign Barcode': 'Assign Barcode',
+                'Enter barcode': 'Enter barcode',
+                'Scan': 'Scan',
+                'Save Barcode': 'Save Barcode',
+                'Rename': 'Rename',
+                '(Current)': '(Current)'
             },
             ro: {
                 'Inventory System': 'Sistem Inventar',
@@ -4026,7 +4043,26 @@
                 'Add Barcode': 'Adaugă cod de bare',
                 'Total:': 'Total:',
                 'Comments:': 'Comentarii:',
-                'No matching history items found.': 'Nu s-au găsit rezultate.'
+                'No matching history items found.': 'Nu s-au găsit rezultate.',
+                'Select': 'Select',
+                'Rectangle': 'Rectangle',
+                'Circle': 'Circle',
+                'Text': 'Text',
+                'Delete Floor Plan': 'Șterge planului de etaj',
+                'Reset': 'Resetat',
+                'Clear All': 'Șterge tot',
+                'Place Products on Floor Plan': 'Plasează produsele pe planul de etaj pentru a le arăta locurile',
+                'Drag products onto the floor plan to show their locations': 'Trage produsele pe planul de etaj pentru a le arăta locurile',
+                'View Mode': 'Mod vizual',
+                'Ready to scan...': 'Pregătește scanarea...',
+                'Switch Camera': 'Schimbă camera',
+                'Close': 'Închide',
+                'Assign Barcode': 'Atribuie cod de bare',
+                'Enter barcode': 'Introduceți codul de bare',
+                'Scan': 'Scan',
+                'Save Barcode': 'Salvează codul de bare',
+                'Rename': 'Redenumire',
+                '(Current)': '(Curent)'
             }
         };
 
@@ -4044,18 +4080,13 @@
                 el.textContent = t(key);
             });
             // Placeholders
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput) searchInput.placeholder = t('Search items...');
-            const itemName = document.getElementById('itemName');
-            if (itemName) itemName.placeholder = t('Item Name');
-            const itemQuantity = document.getElementById('itemQuantity');
-            if (itemQuantity) itemQuantity.placeholder = t('Quantity');
-            const itemPrice = document.getElementById('itemPrice');
-            if (itemPrice) itemPrice.placeholder = t('Price');
-            const newUserName = document.getElementById('newUserName');
-            if (newUserName) newUserName.placeholder = t('User Name');
-            const newLocationName = document.getElementById('newLocationName');
-            if (newLocationName) newLocationName.placeholder = t('Location Name');
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
+            });
+            // Buttons and spans with data-i18n
+            document.querySelectorAll('button[data-i18n], span[data-i18n], label[data-i18n], h2[data-i18n], h3[data-i18n], p[data-i18n]').forEach(el => {
+                el.textContent = t(el.getAttribute('data-i18n'));
+            });
             // Table headers
             document.getElementById('thName').childNodes[0].textContent = t('Name') + ' ';
             document.getElementById('thQuantity').childNodes[0].textContent = t('Quantity') + ' ';
@@ -4075,6 +4106,9 @@
             // Add item form button
             const addItemBtn = document.querySelector('.add-item-form button');
             if (addItemBtn) addItemBtn.textContent = t('Add Item');
+            // Update dynamic user/location lists
+            updateUsersList();
+            updateLocationsList();
         }
 
         function populateLanguageSelect() {
