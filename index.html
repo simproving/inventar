@@ -1510,6 +1510,9 @@
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <span class="editable" onclick="editField('${product.id}', 'name', this)">${product.name}</span>
                             <button class="toggle-details-btn" onclick="toggleDetails('${product.id}')">▼</button>
+                            <button class="search-name-btn" title="Search for this name" onclick="searchByName('${product.name.replace(/'/g, "\\'")}')" style="background: none; border: none; cursor: pointer; padding: 0; margin-left: 2px;">
+                                <span style="font-size: 1em;">🔍</span>
+                            </button>
                         </div>
                     </td>
                     <td>
@@ -4267,6 +4270,16 @@
                 addItem();
             }
         });
+
+        // Add this function in the script section:
+        function searchByName(name) {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.value = name;
+                updateTable();
+                updateHistory && updateHistory();
+            }
+        }
 
     </script>
 </body>
