@@ -3367,19 +3367,14 @@
             users.forEach(user => {
                 const listItem = document.createElement('div');
                 listItem.className = 'settings-list-item';
-                
                 const isCurrentUser = user.name === currentUser;
-                
                 listItem.innerHTML = `
                     <span>${user.name}${isCurrentUser ? ' <span data-i18n="(Current)">(Current)</span>' : ''}</span>
                     <div class="item-actions">
-                        ${!isCurrentUser ? `
-                            <button onclick="renameUserFromSettings('${user.id}')" data-i18n="Rename">Rename</button>
-                            <button onclick="deleteUserFromSettings('${user.id}')" class="danger-btn" data-i18n="Delete">Delete</button>
-                        ` : ''}
+                        <button onclick="renameUserFromSettings('${user.id}')" data-i18n="Rename">Rename</button>
+                        ${!isCurrentUser ? `<button onclick="deleteUserFromSettings('${user.id}')" class="danger-btn" data-i18n="Delete">Delete</button>` : ''}
                     </div>
                 `;
-                
                 usersList.appendChild(listItem);
             });
         }
@@ -3391,19 +3386,14 @@
             locations.forEach(location => {
                 const listItem = document.createElement('div');
                 listItem.className = 'settings-list-item';
-                
                 const isCurrentLocation = location.id === currentLocation;
-                
                 listItem.innerHTML = `
                     <span>${location.name}${isCurrentLocation ? ' <span data-i18n="(Current)">(Current)</span>' : ''}</span>
                     <div class="item-actions">
-                        ${!isCurrentLocation ? `
-                            <button onclick="renameLocationFromSettings('${location.id}')" data-i18n="Rename">Rename</button>
-                            <button onclick="deleteLocationFromSettings('${location.id}')" class="danger-btn" data-i18n="Delete">Delete</button>
-                        ` : ''}
+                        <button onclick="renameLocationFromSettings('${location.id}')" data-i18n="Rename">Rename</button>
+                        ${!isCurrentLocation ? `<button onclick="deleteLocationFromSettings('${location.id}')" class="danger-btn" data-i18n="Delete">Delete</button>` : ''}
                     </div>
                 `;
-                
                 locationsList.appendChild(listItem);
             });
         }
