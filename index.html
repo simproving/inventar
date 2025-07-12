@@ -27,7 +27,7 @@
         </div>
 
         <div class="search-container">
-            <input type="text" id="searchInput" placeholder="Search items...">
+            <input type="text" id="searchInput" placeholder="Search items..." data-i18n-placeholder="Search items...">
         </div>
         <div id="totalFoundContainer" style="margin-left: 10px; margin-bottom: 10px; font-size: 1em; color: #555;"></div>
         <div id="locationFilterButtons" class="location-filter-buttons"></div>
@@ -38,9 +38,9 @@
         </div>
 
         <div class="add-item-form">
-            <input type="text" id="itemName" placeholder="Item Name">
-            <input type="number" id="itemQuantity" placeholder="Quantity">
-            <input type="number" id="itemPrice" placeholder="Price">
+            <input type="text" id="itemName" placeholder="Item Name" data-i18n-placeholder="Item Name">
+            <input type="number" id="itemQuantity" placeholder="Quantity" data-i18n-placeholder="Quantity">
+            <input type="number" id="itemPrice" placeholder="Price" data-i18n-placeholder="Price">
             <select id="addItemLocationSelect"></select>
             <button onclick="addItem()">Add Item</button>
         </div>
@@ -861,6 +861,11 @@
         }
 
         async function editField(productId, field, element) {
+            // Prevent re-entering edit mode if already editing
+            if (element.querySelector('input')) {
+                // Already editing, do nothing
+                return;
+            }
             const product = products.find(p => p.id === productId);
             if (!product) return;
 
@@ -1322,42 +1327,103 @@
                     
                     switch (transaction.type) {
                         case 'add_inventory':
-                            changeText = `[${transaction.user}] Added ${transaction.quantity} ${transaction.productName} to ${getLocationName(transaction.locationId)}`;
+                            changeText = t('log_add_inventory')
+                                .replace('{user}', transaction.user)
+                                .replace('{quantity}', transaction.quantity)
+                                .replace('{productName}', transaction.productName)
+                                .replace('{locationName}', getLocationName(transaction.locationId));
                             break;
                         case 'delete_inventory':
                             const locationDisplayName = transaction.locationName || getLocationName(transaction.locationId);
-                            changeText = `[${transaction.user}] Deleted ${transaction.productName} from ${locationDisplayName}`;
+                            changeText = t('log_delete_inventory')
+                                .replace('{user}', transaction.user)
+                                .replace('{productName}', transaction.productName)
+                                .replace('{locationName}', locationDisplayName);
                             break;
                         case 'delete_product':
-                            changeText = `[${transaction.user}] Removed product ${transaction.productName} completely`;
+                            changeText = t('log_delete_product')
+                                .replace('{user}', transaction.user)
+                                .replace('{productName}', transaction.productName);
                             break;
                         case 'update_quantity':
-                            changeText = `[${transaction.user}] Changed quantity of ${transaction.productName} from ${transaction.oldQuantity} to ${transaction.newQuantity} in ${getLocationName(transaction.locationId)}`;
+                            changeText = t('log_update_quantity')
+                                .replace('{user}', transaction.user)
+                                .replace('{productName}', transaction.productName)
+                                .replace('{oldQuantity}', transaction.oldQuantity)
+                                .replace('{newQuantity}', transaction.newQuantity)
+                                .replace('{locationName}', getLocationName(transaction.locationId));
                             break;
                         case 'edit_product':
-                            changeText = `[${transaction.user}] Changed ${transaction.field} of ${transaction.productName} from ${transaction.oldValue} to ${transaction.newValue}`;
+                            changeText = t('log_edit_product')
+                                .replace('{user}', transaction.user)
+                                .replace('{field}', transaction.field)
+                                .replace('{productName}', transaction.productName)
+                                .replace('{oldValue}', transaction.oldValue)
+                                .replace('{newValue}', transaction.newValue);
                             break;
                         case 'update_details':
-                            changeText = `[${transaction.user}] Updated details for ${transaction.productName}`;
+                            changeText = t('log_update_details')
+                                .replace('{user}', transaction.user)
+                                .replace('{productName}', transaction.productName);
                             break;
                         case 'add_location':
-                            changeText = `[${transaction.user}] Added new location: ${transaction.location.name}`;
+                            changeText = t('log_add_location')
+                                .replace('{user}', transaction.user)
+                                .replace('{locationName}', transaction.location?.name || '');
                             break;
                         case 'delete_location':
-                            changeText = `[${transaction.user}] Deleted location: ${transaction.location.name}`;
+                            changeText = t('log_delete_location')
+                                .replace('{user}', transaction.user)
+                                .replace('{locationName}', transaction.location?.name || '');
                             break;
                         case 'rename_location':
-                            changeText = `[${transaction.user}] Renamed ${transaction.oldName} to ${transaction.newName}`;
+                            changeText = t('log_rename_location')
+                                .replace('{user}', transaction.user)
+                                .replace('{oldName}', transaction.oldName)
+                                .replace('{newName}', transaction.newName);
                             break;
                         case 'update_comments':
-                            changeText = `[${transaction.user}] Updated comments for ${transaction.productName}`;
+                            changeText = t('log_update_comments')
+                                .replace('{user}', transaction.user)
+                                .replace('{productName}', transaction.productName);
+                            break;
+                        case 'scan_barcode':
+                            changeText = t('log_scan_barcode')
+                                .replace('{user}', transaction.user)
+                                .replace('{barcode}', transaction.barcode)
+                                .replace('{productName}', transaction.productName || '');
+                            break;
+                        case 'assign_barcode':
+                            changeText = t('log_assign_barcode')
+                                .replace('{user}', transaction.user)
+                                .replace('{newValue}', transaction.newValue)
+                                .replace('{productName}', transaction.productName);
+                            break;
+                        case 'remove_barcode':
+                            changeText = t('log_remove_barcode')
+                                .replace('{user}', transaction.user)
+                                .replace('{productName}', transaction.productName);
+                            break;
+                        case 'create_product':
+                            changeText = t('log_create_product')
+                                .replace('{user}', transaction.user)
+                                .replace('{productName}', transaction.productName)
+                                .replace('{barcode}', transaction.barcode || '');
+                            break;
+                        case 'duplicate_product':
+                            changeText = t('log_duplicate_product')
+                                .replace('{user}', transaction.user)
+                                .replace('{sourceProductName}', transaction.sourceProductName)
+                                .replace('{productName}', transaction.productName);
                             break;
                         default:
-                            changeText = `[${transaction.user}] Unknown transaction type: ${transaction.type}`;
+                            changeText = t('log_unknown')
+                                .replace('{user}', transaction.user)
+                                .replace('{type}', transaction.type);
                     }
                 } catch (error) {
                     console.error('Error processing transaction entry:', error, transaction);
-                    changeText = 'Error: Invalid transaction entry';
+                    changeText = t('log_error');
                 }
 
                 div.innerHTML = `
@@ -1508,7 +1574,7 @@
                 tr.innerHTML = `
                     <td>
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <span class="editable" onclick="editField('${product.id}', 'name', this)">${product.name}</span>
+                            <span class="editable" onclick="if(!this.querySelector('input'))editField('${product.id}', 'name', this)">${product.name}</span>
                             <button class="toggle-details-btn" onclick="toggleDetails('${product.id}')">▼</button>
                             <button class="search-name-btn" title="Search for this name" onclick="searchByName('${product.name.replace(/'/g, "\\'")}')" style="background: none; border: none; cursor: pointer; padding: 0; margin-left: 2px;">
                                 <span style="font-size: 1em;">🔍</span>
@@ -1537,7 +1603,7 @@
                         </div>
                     </td>
                     <td>
-                        <span class="editable" onclick="editField('${product.id}', 'price', this)">${product.price.toFixed(2)}</span>
+                        <span class="editable" onclick="if(!this.querySelector('input'))editField('${product.id}', 'price', this)">${product.price.toFixed(2)}</span>
                     </td>
                     <td>
                         <button onclick="deleteItem('${product.id}')">Delete</button>
@@ -4072,7 +4138,24 @@
                 'Save Barcode': 'Save Barcode',
                 'Rename': 'Rename',
                 '(Current)': '(Current)',
-                'Duplicate': 'Duplicate'
+                'Duplicate': 'Duplicate',
+                'log_add_inventory': '[{user}] Added {quantity} {productName} to {locationName}',
+                'log_delete_inventory': '[{user}] Deleted {productName} from {locationName}',
+                'log_delete_product': '[{user}] Removed product {productName} completely',
+                'log_update_quantity': '[{user}] Changed quantity of {productName} from {oldQuantity} to {newQuantity} in {locationName}',
+                'log_edit_product': '[{user}] Changed {field} of {productName} from {oldValue} to {newValue}',
+                'log_update_details': '[{user}] Updated details for {productName}',
+                'log_add_location': '[{user}] Added new location: {locationName}',
+                'log_delete_location': '[{user}] Deleted location: {locationName}',
+                'log_rename_location': '[{user}] Renamed {oldName} to {newName}',
+                'log_update_comments': '[{user}] Updated comments for {productName}',
+                'log_scan_barcode': '[{user}] Scanned barcode {barcode} for {productName}',
+                'log_assign_barcode': '[{user}] Assigned barcode {newValue} to {productName}',
+                'log_remove_barcode': '[{user}] Removed barcode from {productName}',
+                'log_create_product': '[{user}] Created product {productName} with barcode {barcode}',
+                'log_duplicate_product': '[{user}] Duplicated product {sourceProductName} as {productName}',
+                'log_unknown': '[{user}] Unknown transaction type: {type}',
+                'log_error': 'Error: Invalid transaction entry'
             },
             ro: {
                 'Inventory System': 'Sistem Inventar',
@@ -4144,7 +4227,23 @@
                 'Rename': 'Redenumire',
                 '(Current)': '(Curent)',
                 'Duplicate': 'Duplică',
-                'Please fill all fields with valid values': 'Vă rugăm să completați toate câmpurile cu valori valide'
+                'log_add_inventory': '[{user}] A adăugat {quantity} {productName} la {locationName}',
+                'log_delete_inventory': '[{user}] A șters {productName} din {locationName}',
+                'log_delete_product': '[{user}] A eliminat complet produsul {productName}',
+                'log_update_quantity': '[{user}] A schimbat cantitatea pentru {productName} de la {oldQuantity} la {newQuantity} în {locationName}',
+                'log_edit_product': '[{user}] A schimbat {field} pentru {productName} de la {oldValue} la {newValue}',
+                'log_update_details': '[{user}] A actualizat detaliile pentru {productName}',
+                'log_add_location': '[{user}] A adăugat locația nouă: {locationName}',
+                'log_delete_location': '[{user}] A șters locația: {locationName}',
+                'log_rename_location': '[{user}] A redenumit {oldName} în {newName}',
+                'log_update_comments': '[{user}] A actualizat comentariile pentru {productName}',
+                'log_scan_barcode': '[{user}] A scanat codul de bare {barcode} pentru {productName}',
+                'log_assign_barcode': '[{user}] A atribuit codul de bare {newValue} la {productName}',
+                'log_remove_barcode': '[{user}] A eliminat codul de bare de la {productName}',
+                'log_create_product': '[{user}] A creat produsul {productName} cu codul de bare {barcode}',
+                'log_duplicate_product': '[{user}] A duplicat produsul {sourceProductName} ca {productName}',
+                'log_unknown': '[{user}] Tip de tranzacție necunoscut: {type}',
+                'log_error': 'Eroare: Înregistrare de tranzacție invalidă'
             }
         };
 
