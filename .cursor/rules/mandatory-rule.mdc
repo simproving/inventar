@@ -1,6 +1,0 @@
----
-description: 
-globs: 
-alwaysApply: true
----
-Never start a server, we only work with static web files. Always read and follow rules.md from the root folder.
