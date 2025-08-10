@@ -189,6 +189,10 @@
                     <input type="file" id="settingsImportFile" accept=".json" style="display: none;" onchange="handleImportFile(event)">
                 </div>
                 <div class="settings-item">
+                    <label data-i18n="Rebuild from History">Rebuild from History</label>
+                    <button onclick="confirmRebuildFromHistory()" data-i18n="Rebuild">Rebuild</button>
+                </div>
+                <div class="settings-item">
                     <label data-i18n="Clear All Data">Clear All Data</label>
                     <button onclick="confirmClearData()" class="danger-btn" data-i18n="Clear Database">Clear Database</button>
                 </div>
@@ -352,19 +356,22 @@
 
         const saveToIndexedDB = async (storeName, data) => {
             try {
+                const tx = db.transaction(storeName, 'readwrite');
+                const store = tx.objectStore(storeName);
                 
-                await db.clear(storeName);
-                
+                await store.clear();
                 for (const item of data) {
-                    await db.add(storeName, item);
+                    store.add(item); 
                 }
-                
+
+                await tx.done; 
                 console.log(`Data saved to ${storeName} successfully`);
             } catch (error) {
                 console.error(`Error saving data to ${storeName}:`, error);
                 throw error;
             }
         };
+
 
         const loadFromIndexedDB = async (storeName) => {
             try {
@@ -2035,6 +2042,220 @@
             } catch (error) {
                 console.error('Error handling import file:', error);
                 alert('Error handling import file: ' + error.message);
+            }
+        }
+
+        // Rebuild from History
+        function confirmRebuildFromHistory() {
+            const proceed = confirm(t('Are you sure you want to rebuild all data from the transaction history? This will overwrite current products, inventory and locations.'));
+            if (!proceed) return;
+            rebuildFromHistory();
+        }
+
+        async function rebuildFromHistory() {
+            try {
+                // Load transactions (authoritative log)
+                const storedTransactions = await loadFromIndexedDB('transactions');
+                const history = Array.isArray(storedTransactions) ? storedTransactions : (Array.isArray(transactions) ? transactions : []);
+
+                // Reset state
+                products = [];
+                locations = [];
+                inventoryItems = [];
+
+                const productById = new Map();
+                const locationById = new Map();
+
+                function ensureDefaultLocation() {
+                    if (locations.length === 0) {
+                        const def = { id: '1', name: 'Location 1' };
+                        locations.push(def);
+                        locationById.set(def.id, def);
+                    }
+                }
+
+                const sorted = [...history].sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
+
+                for (const tx of sorted) {
+                    switch (tx.type) {
+                        case 'create_product': {
+                            if (!tx.productId) break;
+                            if (!productById.has(tx.productId)) {
+                                const prod = {
+                                    id: tx.productId,
+                                    name: tx.productName || `Product ${tx.productId}`,
+                                    price: typeof tx.price === 'number' ? tx.price : 0,
+                                    comments: '',
+                                    barcode: tx.barcode || ''
+                                };
+                                products.push(prod);
+                                productById.set(prod.id, prod);
+                            }
+                            break;
+                        }
+                        case 'edit_product': {
+                            const prod = tx.productId ? (productById.get(tx.productId) || null) : null;
+                            if (!prod) break;
+                            if (tx.field === 'name' && typeof tx.newValue === 'string') prod.name = tx.newValue;
+                            if (tx.field === 'price' && typeof tx.newValue === 'number') prod.price = tx.newValue;
+                            break;
+                        }
+                        case 'update_comments': {
+                            const prod = tx.productId ? (productById.get(tx.productId) || null) : null;
+                            if (!prod) break;
+                            if (typeof tx.newValue === 'string') prod.comments = tx.newValue;
+                            break;
+                        }
+                        case 'assign_barcode': {
+                            const prod = tx.productId ? (productById.get(tx.productId) || null) : null;
+                            if (!prod) break;
+                            if (typeof tx.newValue === 'string') prod.barcode = tx.newValue;
+                            break;
+                        }
+                        case 'remove_barcode': {
+                            const prod = tx.productId ? (productById.get(tx.productId) || null) : null;
+                            if (!prod) break;
+                            prod.barcode = '';
+                            break;
+                        }
+                        case 'delete_product': {
+                            if (!tx.productId) break;
+                            products = products.filter(p => p.id !== tx.productId);
+                            productById.delete(tx.productId);
+                            inventoryItems = inventoryItems.filter(item => item.productId !== tx.productId);
+                            break;
+                        }
+                        case 'add_location': {
+                            if (tx.location && tx.location.id) {
+                                const loc = { id: String(tx.location.id), name: tx.location.name || `Location ${locations.length + 1}` };
+                                if (!locationById.has(loc.id)) {
+                                    locations.push(loc);
+                                    locationById.set(loc.id, loc);
+                                }
+                            }
+                            break;
+                        }
+                        case 'rename_location': {
+                            const locId = tx.locationId ? String(tx.locationId) : null;
+                            if (locId && locationById.has(locId)) {
+                                locationById.get(locId).name = tx.newName || locationById.get(locId).name;
+                            }
+                            break;
+                        }
+                        case 'delete_location': {
+                            if (tx.location && tx.location.id) {
+                                const id = String(tx.location.id);
+                                locations = locations.filter(l => l.id !== id);
+                                locationById.delete(id);
+                                inventoryItems = inventoryItems.filter(item => item.locationId !== id);
+                            }
+                            break;
+                        }
+                        case 'add_inventory': {
+                            ensureDefaultLocation();
+                            const productId = tx.productId;
+                            const locationId = tx.locationId ? String(tx.locationId) : (locations[0]?.id || '1');
+                            if (!productId) break;
+                            if (!productById.has(productId)) {
+                                const prod = {
+                                    id: productId,
+                                    name: tx.productName || `Product ${productId}`,
+                                    price: 0,
+                                    comments: '',
+                                    barcode: ''
+                                };
+                                products.push(prod);
+                                productById.set(prod.id, prod);
+                            }
+                            if (!locationById.has(locationId)) {
+                                const loc = { id: locationId, name: `Location ${locations.length + 1}` };
+                                locations.push(loc);
+                                locationById.set(loc.id, loc);
+                            }
+                            const quantityToAdd = Number(tx.quantity) || 0;
+                            if (quantityToAdd <= 0) break;
+                            let inv = inventoryItems.find(i => i.productId === productId && i.locationId === locationId);
+                            if (inv) {
+                                inv.quantity += quantityToAdd;
+                            } else {
+                                inv = { id: Date.now().toString() + Math.random().toString(36).slice(2,7), productId, locationId, quantity: quantityToAdd };
+                                inventoryItems.push(inv);
+                            }
+                            break;
+                        }
+                        case 'update_quantity': {
+                            ensureDefaultLocation();
+                            const productId = tx.productId;
+                            const locationId = tx.locationId ? String(tx.locationId) : (locations[0]?.id || '1');
+                            if (!productId) break;
+                            if (!productById.has(productId)) {
+                                const prod = {
+                                    id: productId,
+                                    name: tx.productName || `Product ${productId}`,
+                                    price: 0,
+                                    comments: '',
+                                    barcode: ''
+                                };
+                                products.push(prod);
+                                productById.set(prod.id, prod);
+                            }
+                            if (!locationById.has(locationId)) {
+                                const loc = { id: locationId, name: `Location ${locations.length + 1}` };
+                                locations.push(loc);
+                                locationById.set(loc.id, loc);
+                            }
+                            const newQuantity = typeof tx.newQuantity === 'number' ? tx.newQuantity : null;
+                            if (newQuantity === null) break;
+                            let inv = inventoryItems.find(i => i.productId === productId && i.locationId === locationId);
+                            if (inv) {
+                                inv.quantity = newQuantity;
+                                if (inv.quantity <= 0) {
+                                    inventoryItems = inventoryItems.filter(i => !(i.productId === productId && i.locationId === locationId));
+                                }
+                            } else if (newQuantity > 0) {
+                                inv = { id: Date.now().toString() + Math.random().toString(36).slice(2,7), productId, locationId, quantity: newQuantity };
+                                inventoryItems.push(inv);
+                            }
+                            break;
+                        }
+                        case 'delete_inventory': {
+                            const productId = tx.productId;
+                            const locationId = tx.locationId ? String(tx.locationId) : null;
+                            if (!productId) break;
+                            if (locationId) {
+                                inventoryItems = inventoryItems.filter(i => !(i.productId === productId && i.locationId === locationId));
+                            } else {
+                                inventoryItems = inventoryItems.filter(i => i.productId !== productId);
+                            }
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                }
+
+                await saveToIndexedDB('products', products);
+                await saveToIndexedDB('locations', locations);
+                await saveToIndexedDB('inventory', inventoryItems);
+
+                // Reset current location/filter to a valid one
+                if (locations.length > 0) {
+                    currentLocation = locations[0].id;
+                    locationFilter = locations[0].id;
+                } else {
+                    currentLocation = '';
+                    locationFilter = null;
+                }
+
+                await loadUsers();
+                updateLocationSelect();
+                updateTable();
+                updateHistory();
+
+                alert(t('Rebuild complete'));
+            } catch (e) {
+                console.error('Rebuild error:', e);
+                alert(t('Error rebuilding from history') + ': ' + (e && e.message ? e.message : e));
             }
         }
 
