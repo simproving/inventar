@@ -1556,7 +1556,14 @@
                 return (matchesName || matchesBarcode) && showInLocation;
             });
             // --- Sum total quantities for filtered products ---
-            const totalFound = filteredProducts.reduce((sum, entry) => sum + entry.totalQuantity, 0);
+            // If a location filter is active, sum only that location's quantities
+            // Otherwise, sum the total quantities across all locations
+            const totalFound = filteredProducts.reduce((sum, entry) => {
+                if (locationFilter) {
+                    return sum + (entry.quantities[locationFilter] || 0);
+                }
+                return sum + entry.totalQuantity;
+            }, 0);
             const totalFoundContainer = document.getElementById('totalFoundContainer');
             if (totalFoundContainer) {
                 totalFoundContainer.textContent = `Total found: ${totalFound}`;
