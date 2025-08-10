@@ -90,3 +90,5 @@ This inventory management system should prioritize usability, performance, and d
 
 
 
+# Run tests
+node ./node_modules/jest/bin/jest.js --config jest.config.cjs --runInBand --verbose

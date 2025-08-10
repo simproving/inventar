@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inventory System</title>
     <link rel="stylesheet" href="style.css">
-    <script src="localization.js"></script>
+    <script src="js/localization.js"></script>
 </head>
 <body>
     <div class="container">
@@ -237,14 +237,14 @@
     <script src="https://cdn.jsdelivr.net/npm/idb@8/build/umd.js"></script>
     <script src="https://unpkg.com/konva@9/konva.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js"></script>
-    <script src="floorplan.js"></script>
+    <script src="js/floorplan.js"></script>
     <script type="module">
         import { BrowserMultiFormatReader, NotFoundException } from 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/+esm';
         window.BrowserMultiFormatReader = BrowserMultiFormatReader;
         window.NotFoundException = NotFoundException;
     </script>
-    <script src="barcode.js"></script>
-    <script src="invoice.js"></script>
+    <script src="js/barcode.js"></script>
+    <script src="js/invoice.js"></script>
 
     <script>
         // Pagination state variables (must be declared before any function uses them)
@@ -995,7 +995,7 @@
             });
         }
 
-        function toggleDetails(id) {
+        function toggleDetails(event, id) {
             const details = document.getElementById(`details-${id}`);
             const button = event.target;
             if (details.classList.contains('show')) {
@@ -1623,7 +1623,7 @@
                     <td>
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <span class="editable" onclick="if(!this.querySelector('input'))editField('${product.id}', 'name', this)">${product.name}</span>
-                            <button class="toggle-details-btn" onclick="toggleDetails('${product.id}')">▼</button>
+                            <button class="toggle-details-btn" onclick="toggleDetails(event, '${product.id}')">▼</button>
                             <button class="search-name-btn" title="Search for this name" onclick="searchByName('${product.name.replace(/'/g, "\\'")}')" style="background: none; border: none; cursor: pointer; padding: 0; margin-left: 2px;">
                                 <span style="font-size: 1em;">🔍</span>
                             </button>
@@ -2422,6 +2422,7 @@
                 }
                 
                 // Update in users array
+                const oldName = user.name;
                 user.name = newName;
                 
                 // Update current user if needed
@@ -2430,7 +2431,7 @@
                 }
                 
                 // Update in history
-                updateUserInHistory(user.name, newName);
+                updateUserInHistory(oldName, newName);
                 
                 // Save to IndexedDB
                 await saveToIndexedDB('users', users);
@@ -2607,7 +2608,7 @@
                 updateLocationsList();
                 
                 // Update location dropdown
-                updateLocationFilterButtons();
+                renderLocationFilterButtons();
                 updateTable();
                 updateHistory();
             }
