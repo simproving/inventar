@@ -1425,12 +1425,6 @@
                                 .replace('{productName}', transaction.productName)
                                 .replace('{barcode}', transaction.barcode || '');
                             break;
-                        case 'duplicate_product':
-                            changeText = t('log_duplicate_product')
-                                .replace('{user}', transaction.user)
-                                .replace('{sourceProductName}', transaction.sourceProductName)
-                                .replace('{productName}', transaction.productName);
-                            break;
                         default:
                             changeText = t('log_unknown')
                                 .replace('{user}', transaction.user)
@@ -1639,7 +1633,6 @@
                     <td>
                         <button onclick="deleteItem('${product.id}')">Delete</button>
                         <button class="barcode-btn" onclick="openBarcodeModal('${product.id}')">${product.barcode ? 'Edit Barcode' : 'Add Barcode'}</button>
-                        <button onclick="duplicateProduct('${product.id}')" data-i18n="Duplicate">Duplicate</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -3091,44 +3084,6 @@
                 };
                 container.appendChild(btn);
             });
-        }
-
-        // Add this function near deleteItem and editField
-        async function duplicateProduct(productId) {
-            const product = products.find(p => p.id === productId);
-            if (!product) return;
-            // Create a new product object with a new ID
-            const newProductId = Date.now().toString() + Math.random().toString(36).substr(2, 5);
-            const newProduct = {
-                id: newProductId,
-                name: product.name + ' (Copy)',
-                price: product.price,
-                comments: product.comments,
-                barcode: '', // Do not copy barcode
-            };
-            products.push(newProduct);
-            // Duplicate all inventory entries for this product
-            const originalInventories = inventoryItems.filter(item => item.productId === productId);
-            for (const entry of originalInventories) {
-                const newInventory = {
-                    id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
-                    productId: newProductId,
-                    locationId: entry.locationId,
-                    quantity: entry.quantity
-                };
-                inventoryItems.push(newInventory);
-            }
-            await addToHistory({
-                type: 'duplicate_product',
-                productId: newProduct.id,
-                productName: newProduct.name,
-                sourceProductId: product.id,
-                sourceProductName: product.name,
-                timestamp: new Date().toISOString()
-            });
-            await save();
-            updateTable();
-            alert('Product duplicated!');
         }
 
         // After the add-item-form input fields are defined, add this event listener:
