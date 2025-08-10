@@ -1475,6 +1475,7 @@
             historyPage = 1;
             updateTable();
             updateHistory(); // Also update history when search input changes
+            renderLocationFilterButtons(); // Update location filter buttons with new quantities
         });
                 // --- Sorting State ---
                 let sortColumn = 'name';
@@ -1658,6 +1659,9 @@
                 (page) => { inventoryPage = page; updateTable(); },
                 (size) => { inventoryPageSize = size; inventoryPage = 1; updateTable(); }
             );
+            
+            // Update location filter buttons to reflect current quantities
+            renderLocationFilterButtons();
         }
 
         // Handle errors with IndexedDB
@@ -2362,9 +2366,49 @@
             if (!container) return;
             container.innerHTML = '';
             if (!locations || locations.length === 0) return;
+            
+            // Add "All" button first
+            const allBtn = document.createElement('button');
+            allBtn.textContent = 'All';
+            allBtn.className = 'location-filter-btn' + (locationFilter === null ? ' selected' : '');
+            allBtn.onclick = () => {
+                locationFilter = null;
+                renderLocationFilterButtons();
+                updateTable();
+            };
+            container.appendChild(allBtn);
+            
+            // Add individual location buttons with quantities
             locations.forEach(loc => {
                 const btn = document.createElement('button');
-                btn.textContent = loc.name;
+                const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+                
+                // Calculate total quantity for this location based on current search
+                let locationTotal = 0;
+                if (searchTerm) {
+                    // Filter products by search term and sum quantities for this location
+                    products.forEach(product => {
+                        const matchesName = product.name.toLowerCase().includes(searchTerm);
+                        const matchesBarcode = product.barcode && product.barcode.toLowerCase().includes(searchTerm);
+                        if (matchesName || matchesBarcode) {
+                            const inventoryItem = inventoryItems.find(item => 
+                                item.productId === product.id && item.locationId === loc.id
+                            );
+                            if (inventoryItem) {
+                                locationTotal += inventoryItem.quantity;
+                            }
+                        }
+                    });
+                } else {
+                    // No search term, sum all quantities for this location
+                    inventoryItems.forEach(item => {
+                        if (item.locationId === loc.id) {
+                            locationTotal += item.quantity;
+                        }
+                    });
+                }
+                
+                btn.textContent = `${loc.name} (${locationTotal})`;
                 btn.className = 'location-filter-btn' + (locationFilter === loc.id ? ' selected' : '');
                 btn.onclick = () => {
                     locationFilter = loc.id;
