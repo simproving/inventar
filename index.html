@@ -1594,6 +1594,12 @@
                 tr.className = 'item-row';
                 tr.dataset.productId = product.id;
                 
+                // When a location filter is active, only show that location's quantities
+                const displayedLocations = locationFilter ? locations.filter(loc => loc.id === locationFilter) : locations;
+                const quantityHeaderText = locationFilter
+                    ? `${(locations.find(l => l.id === locationFilter) || { name: 'Quantity' }).name}: ${entry.quantities[locationFilter] || 0}`
+                    : `Total: ${entry.totalQuantity}`;
+
                 const locationQuantities = locations.map(loc => {
                     const quantity = entry.quantities[loc.id] || 0;
                     const isCurrent = loc.id === currentLocation;
@@ -1625,10 +1631,10 @@
                     </td>
                     <td>
                         <div class="total-quantity">
-                            <strong data-product-id="${product.id}" data-total="true">Total: ${entry.totalQuantity}</strong>
+                            <strong data-product-id="${product.id}" data-total="true">${quantityHeaderText}</strong>
                         </div>
                         <div class="location-quantities-list">
-                            ${locations.map(loc => {
+                            ${displayedLocations.map(loc => {
                                 const locQuantity = entry.quantities[loc.id] || 0;
                                 const isCurrent = loc.id === currentLocation;
                                 return `
