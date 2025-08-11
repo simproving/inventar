@@ -1428,14 +1428,6 @@
                     ? `${(locations.find(l => l.id === locationFilter) || { name: 'Quantity' }).name}: ${entry.quantities[locationFilter] || 0}`
                     : `Total: ${entry.totalQuantity}`;
 
-                const locationQuantities = locations.map(loc => {
-                    const quantity = entry.quantities[loc.id] || 0;
-                    const isCurrent = loc.id === currentLocation;
-                    return quantity > 0 ? 
-                        `<span class="location-quantity ${isCurrent ? 'current' : ''}">${loc.name}: ${quantity}</span>` : 
-                        '';
-                }).filter(Boolean).join('');
-
                 const detailsHtml = `
                     <div class="item-details" id="details-${product.id}">
                         <div class="item-details-grid">
@@ -1458,9 +1450,11 @@
                         </div>
                     </td>
                     <td>
+                        ${locationFilter ? '' : `
                         <div class="total-quantity">
                             <strong data-product-id="${product.id}" data-total="true">${quantityHeaderText}</strong>
                         </div>
+                        `}
                         <div class="location-quantities-list">
                             ${displayedLocations.map(loc => {
                                 const locQuantity = entry.quantities[loc.id] || 0;
