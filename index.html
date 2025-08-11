@@ -28,7 +28,6 @@
         <div class="search-container">
             <input type="text" id="searchInput" placeholder="Search items..." data-i18n-placeholder="Search items...">
         </div>
-        <div id="totalFoundContainer" style="margin-left: 10px; margin-bottom: 10px; font-size: 1em; color: #555;"></div>
         <div id="locationFilterButtons" class="location-filter-buttons"></div>
 
         <div id="pendingInvoices" class="pending-invoices">
@@ -1381,19 +1380,7 @@
                 const showInLocation = locationFilter ? (entry.quantities[locationFilter] > 0) : true;
                 return (matchesName || matchesBarcode) && showInLocation;
             });
-            // --- Sum total quantities for filtered products ---
-            // If a location filter is active, sum only that location's quantities
-            // Otherwise, sum the total quantities across all locations
-            const totalFound = filteredProducts.reduce((sum, entry) => {
-                if (locationFilter) {
-                    return sum + (entry.quantities[locationFilter] || 0);
-                }
-                return sum + entry.totalQuantity;
-            }, 0);
-            const totalFoundContainer = document.getElementById('totalFoundContainer');
-            if (totalFoundContainer) {
-                totalFoundContainer.textContent = `Total found: ${totalFound}`;
-            }
+            // Removed totalFoundContainer display; totals are now shown on the 'All' button
             // --- Sort by selected column and direction ---
             filteredProducts.sort((a, b) => {
                 let valA, valB;
@@ -1620,9 +1607,32 @@
             container.innerHTML = '';
             if (!locations || locations.length === 0) return;
             
-            // Add "All" button first
+            // Get current search term for calculating button totals
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+            // Calculate total for all locations based on current search
+            let allTotal = 0;
+            if (searchTerm) {
+                products.forEach(product => {
+                    const matchesName = product.name.toLowerCase().includes(searchTerm);
+                    const matchesBarcode = product.barcode && product.barcode.toLowerCase().includes(searchTerm);
+                    if (matchesName || matchesBarcode) {
+                        inventoryItems.forEach(item => {
+                            if (item.productId === product.id) {
+                                allTotal += item.quantity;
+                            }
+                        });
+                    }
+                });
+            } else {
+                inventoryItems.forEach(item => {
+                    allTotal += item.quantity;
+                });
+            }
+
+            // Add "All" button first with total
             const allBtn = document.createElement('button');
-            allBtn.textContent = 'All';
+            allBtn.textContent = `All (${allTotal})`;
             allBtn.className = 'location-filter-btn' + (locationFilter === null ? ' selected' : '');
             allBtn.onclick = () => {
                 locationFilter = null;
@@ -1636,7 +1646,6 @@
             // Add individual location buttons with quantities
             locations.forEach(loc => {
                 const btn = document.createElement('button');
-                const searchTerm = document.getElementById('searchInput').value.toLowerCase();
                 
                 // Calculate total quantity for this location based on current search
                 let locationTotal = 0;
