@@ -1719,7 +1719,7 @@
 
             // Add "All" button first with total
             const allBtn = document.createElement('button');
-            allBtn.textContent = `All (${allTotal})`;
+            allBtn.textContent = `${t('All')} (${allTotal})`;
             allBtn.className = 'location-filter-btn' + (locationFilter === null ? ' selected' : '');
             allBtn.onclick = () => {
                 locationFilter = null;
