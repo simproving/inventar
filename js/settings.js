@@ -377,14 +377,20 @@ async function rebuildFromHistory() {
   }
 }
 
-// Add ESC key support for settings modal
+// Add ESC key support for settings modal: only close, never open
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') {
     const settingsModal = document.getElementById('settingsModal');
-    if (settingsModal.style.display === 'block') {
+    const floorPlanModal = document.getElementById('floorPlanModal');
+    const isFloorPlanOpen = floorPlanModal && floorPlanModal.style.display === 'block';
+
+    // If floor plan is open, let its handler manage ESC
+    if (isFloorPlanOpen) return;
+
+    if (settingsModal && settingsModal.style.display === 'block') {
+      event.preventDefault();
+      event.stopPropagation();
       closeSettings();
-    } else {
-      openSettings();
     }
   }
 });

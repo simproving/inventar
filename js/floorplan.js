@@ -523,6 +523,23 @@ function closeFloorPlan() {
     modal.style.display = 'none';
 }
 
+// Handle ESC key: if floor plan is open, save and close it
+document.addEventListener('keydown', async (event) => {
+    if (event.key === 'Escape') {
+        const floorPlanModal = document.getElementById('floorPlanModal');
+        if (floorPlanModal && floorPlanModal.style.display === 'block') {
+            event.preventDefault();
+            event.stopPropagation();
+            try {
+                await saveFloorPlan();
+            } catch (_) {
+                // Ignore save error here; user-visible errors are handled inside saveFloorPlan
+            }
+            closeFloorPlan();
+        }
+    }
+});
+
 async function loadFloorPlan(locationId) {
     try {
         console.log('Loading floor plan for location:', locationId);
@@ -741,7 +758,11 @@ async function saveFloorPlan() {
         const savedPlan = await db.get('floorPlans', currentLocation);
         if (savedPlan) {
             console.log('Floor plan saved and verified:', savedPlan);
-            alert('Floor plan saved successfully!');
+            if (typeof showToast === 'function') {
+                showToast('Floor plan saved successfully!', 'success');
+            } else {
+                alert('Floor plan saved successfully!');
+            }
         } else {
             throw new Error('Floor plan was not saved correctly');
         }
