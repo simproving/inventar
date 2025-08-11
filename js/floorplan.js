@@ -19,6 +19,7 @@ let konvaShapes = [];
 let currentZoom = 1;
 let isDraggingStage = false;
 let lastPointerPosition = null;
+let lastClientPointer = null;
 
 function openFloorPlan() {
     const modal = document.getElementById('floorPlanModal');
@@ -83,30 +84,31 @@ function initKonvaStage() {
     });
     layer.add(transformer);
     
+    // Disable stage dragging by default; we enable it only for panning
+    stage.draggable(false);
+
     // Add wheel event listener for zooming
     stage.on('wheel', (e) => {
         e.evt.preventDefault();
         
         const oldScale = stage.scaleX();
         const pointer = stage.getPointerPosition();
-        
-        const mousePointTo = {
-            x: (pointer.x - stage.x()) / oldScale,
-            y: (pointer.y - stage.y()) / oldScale,
-        };
+        const transform = stage.getAbsoluteTransform().copy();
+        const pointerTo = transform.copy().invert().point(pointer);
         
         // Calculate new scale
         const newScale = e.evt.deltaY < 0 ? oldScale * 1.1 : oldScale / 1.1;
         
         // Limit zoom level between 0.1 and 3
         if (newScale >= 0.1 && newScale <= 3) {
+            // Update scale first
             stage.scale({ x: newScale, y: newScale });
             
+            // Compute new position so the pointer stays anchored
             const newPos = {
-                x: pointer.x - mousePointTo.x * newScale,
-                y: pointer.y - mousePointTo.y * newScale,
+                x: pointer.x - pointerTo.x * newScale,
+                y: pointer.y - pointerTo.y * newScale,
             };
-            
             stage.position(newPos);
             stage.batchDraw();
             
@@ -116,57 +118,50 @@ function initKonvaStage() {
         }
     });
 
-    // Add mouse events for stage dragging
+    // Add mouse events for stage panning using built-in dragging
     stage.on('mousedown', (e) => {
-        // Don't start dragging if clicking on a shape or transformer
-        if (e.target !== stage && e.target !== layer) {
-            return;
+        const isShift = !!e.evt.shiftKey;
+        const shouldPan = !isEditMode || (isEditMode && isShift);
+        if (!shouldPan) return;
+
+        // Cancel any node drag to prevent double motion
+        if (e.target && typeof e.target.stopDrag === 'function' && e.target !== stage) {
+            try { e.target.stopDrag(); } catch (_) {}
         }
 
-        // Only enable dragging if:
-        // 1. We're in view mode (not edit mode), or
-        // 2. The user is holding the shift key (for edit mode)
-        if (!isEditMode || (isEditMode && e.evt.shiftKey)) {
-            isDraggingStage = true;
-            lastPointerPosition = stage.getPointerPosition();
-            document.body.style.cursor = 'grabbing';
+        // Clear selection/transformer to avoid transformer updates during pan
+        if (transformer) {
+            try { transformer.nodes([]); } catch (_) {}
         }
-    });
+        selectedShape = null;
 
-    stage.on('mousemove', (e) => {
-        if (!isDraggingStage) {
-            // Update cursor based on mode and shift key
-            if (!isEditMode || (isEditMode && e.evt.shiftKey)) {
-                document.body.style.cursor = 'grab';
-            } else {
-                document.body.style.cursor = 'default';
-            }
-            return;
-        }
+        // Temporarily disable dragging of all shapes/groups while panning
+        try {
+            konvaShapes.forEach(s => { if (s && typeof s.draggable === 'function') s.draggable(false); });
+            layer.find('.productGroup').forEach(g => { if (g && typeof g.draggable === 'function') g.draggable(false); });
+        } catch (_) {}
 
-        if (!lastPointerPosition) {
-            return;
-        }
-
-        e.evt.preventDefault();
-        const pos = stage.getPointerPosition();
-        const dx = pos.x - lastPointerPosition.x;
-        const dy = pos.y - lastPointerPosition.y;
-
-        // Move the stage
-        stage.position({
-            x: stage.x() + dx,
-            y: stage.y() + dy
-        });
-        stage.batchDraw();
-
-        lastPointerPosition = pos;
+        stage.draggable(true);
+        document.body.style.cursor = 'grabbing';
+        // Force stage to start dragging even if clicked on a child
+        try { stage.startDrag(); } catch (_) {}
+        isDraggingStage = true;
     });
 
     stage.on('mouseup', () => {
-        isDraggingStage = false;
-        lastPointerPosition = null;
+        // Stop stage drag and disable it in edit mode
+        if (stage.isDragging()) try { stage.stopDrag(); } catch (_) {}
+        if (isEditMode) stage.draggable(false);
         document.body.style.cursor = isEditMode ? 'default' : 'grab';
+        isDraggingStage = false;
+
+        // Re-enable dragging of shapes/groups after panning ends (only in edit mode)
+        if (isEditMode) {
+            try {
+                konvaShapes.forEach(s => { if (s && typeof s.draggable === 'function') s.draggable(true); });
+                layer.find('.productGroup').forEach(g => { if (g && typeof g.draggable === 'function') g.draggable(true); });
+            } catch (_) {}
+        }
     });
 
     // Add keyboard event listener for shift key
@@ -211,32 +206,57 @@ function setupKonvaEvents() {
         // Handle delete tool
         if (currentTool === 'delete') {
             try {
-                const clickedShape = e.target;
-                console.log("Attempting to delete shape:", clickedShape);
-                
+                let target = e.target;
+                console.log("Attempting to delete shape:", target);
+
                 // Remove from transformer
                 transformer.nodes([]);
-                
-                // If it's a basic shape, remove from konvaShapes
-                const shapeIndex = konvaShapes.indexOf(clickedShape);
+
+                // If clicking inside a product group, delete the whole group
+                let productGroup = null;
+                let node = target;
+                while (node && node !== stage && node !== layer) {
+                    if (node instanceof Konva.Group && node.attrs && node.attrs.productId) {
+                        productGroup = node;
+                        break;
+                    }
+                    if (typeof node.getParent === 'function') {
+                        node = node.getParent();
+                    } else {
+                        break;
+                    }
+                }
+
+                if (productGroup) {
+                    const productId = productGroup.attrs.productId;
+                    placedProducts = placedProducts.filter(p => p.productId !== productId);
+                    try {
+                        productGroup.destroy();
+                    } catch (_) {
+                        // If direct destroy fails, remove children then destroy
+                        try { productGroup.destroyChildren(); } catch (_) {}
+                        try { productGroup.remove(); } catch (_) {}
+                    }
+                    selectedShape = null;
+                    layer.draw();
+                    console.log("Deleted product group:", productId);
+                    return;
+                }
+
+                // Otherwise, handle basic shapes (including parts of product group)
+                const shapeIndex = konvaShapes.indexOf(target);
                 if (shapeIndex > -1) {
                     konvaShapes.splice(shapeIndex, 1);
+                    try { target.destroy(); } catch (_) { try { target.remove(); } catch (_) {} }
+                    selectedShape = null;
+                    layer.draw();
+                    console.log("Basic shape deleted with delete tool");
+                    return;
                 }
-                
-                // If it's a group with a product ID, remove from placedProducts
-                if (clickedShape instanceof Konva.Group && clickedShape.attrs.productId) {
-                    const productId = clickedShape.attrs.productId;
-                    placedProducts = placedProducts.filter(p => p.productId !== productId);
-                }
-                
-                // Delete the shape
-                clickedShape.destroy();
+                // If it wasn't a tracked basic shape and not a productGroup, ignore delete to avoid half-deletions
+                console.log("Ignoring delete on untracked node to prevent partial removal");
                 selectedShape = null;
                 layer.draw();
-                
-                console.log("Shape deleted with delete tool, staying in delete mode");
-                
-                // No need to switch tools - stay in delete mode
                 return;
             } catch (error) {
                 console.error("Error deleting shape with delete tool:", error);
@@ -252,8 +272,17 @@ function setupKonvaEvents() {
             // Select the shape
             try {
                 console.log("Selecting shape:", e.target);
-                transformer.nodes([e.target]);
-                selectedShape = e.target;
+                // If clicked inside a Group, select the group
+                let targetNode = e.target;
+                if (targetNode && targetNode.getParent() && targetNode.getParent().className !== 'Layer' && targetNode.getParent().className !== 'Stage') {
+                    targetNode = targetNode.getParent();
+                }
+                // Only attach transformer to drawable shapes/groups
+                if (!targetNode || targetNode.className === 'Stage' || targetNode.className === 'Layer') {
+                    return;
+                }
+                transformer.nodes([targetNode]);
+                selectedShape = targetNode;
                 layer.draw();
             } catch (error) {
                 console.error("Error selecting shape:", error);
@@ -277,9 +306,14 @@ function setupKonvaEvents() {
         if (e.target !== stage && e.target !== layer) return;
         
         isDrawing = true;
-        const pos = stage.getPointerPosition();
-        startX = pos.x;
-        startY = pos.y;
+        // Use stage-local coordinates for drawing start
+        const rect = stage.container().getBoundingClientRect();
+        const pointerX = e.evt.clientX - rect.left;
+        const pointerY = e.evt.clientY - rect.top;
+        const scale = stage.scaleX();
+        const pos = stage.position();
+        startX = (pointerX - pos.x) / scale;
+        startY = (pointerY - pos.y) / scale;
         
         try {
             if (currentTool === 'rectangle') {
@@ -364,7 +398,13 @@ function setupKonvaEvents() {
     stage.on('mousemove.draw', function(e) {
         if (!isDrawing || !selectedShape) return;
         
-        const pos = stage.getPointerPosition();
+        // Use stage-local coordinates while drawing
+        const rect = stage.container().getBoundingClientRect();
+        const pointerX = e.evt.clientX - rect.left;
+        const pointerY = e.evt.clientY - rect.top;
+        const scale = stage.scaleX();
+        const posStage = stage.position();
+        const pos = { x: (pointerX - posStage.x) / scale, y: (pointerY - posStage.y) / scale };
         
         try {
             if (currentTool === 'rectangle' && selectedShape instanceof Konva.Rect) {
@@ -549,36 +589,71 @@ async function loadFloorPlan(locationId) {
             placedProductsContainer.innerHTML = '';
             
             placedProducts.forEach(product => {
+                // Children at local (0,0); group holds absolute position
                 const productText = new Konva.Text({
-                    x: product.x,
-                    y: product.y,
+                    x: 0,
+                    y: 0,
                     text: product.name,
                     fontSize: 14,
                     padding: 5,
                     fill: '#ffffff',
-                    draggable: true,
+                    draggable: false,
                     id: 'product-' + product.productId
                 });
                 
                 const productBox = new Konva.Rect({
-                    x: product.x,
-                    y: product.y,
+                    x: 0,
+                    y: 0,
                     width: productText.width(),
                     height: productText.height(),
                     fill: '#2196F3',
                     opacity: 0.7,
                     cornerRadius: 3,
-                    draggable: true
+                    draggable: false
                 });
                 
-                // Group product text and box
+                // Group product text and box; position group at saved coords
                 const productGroup = new Konva.Group({
+                    x: product.x,
+                    y: product.y,
                     draggable: true,
+                    name: 'productGroup',
                     productId: product.productId
                 });
                 
                 productGroup.add(productBox);
                 productGroup.add(productText);
+                
+                // Ensure group is interactive
+                productGroup.listening(true);
+                
+                // Attach drag handlers similar to creation flow
+                productGroup.off('dragstart');
+                productGroup.off('dragend');
+                
+                productGroup.on('dragstart', function(e) {
+                    // If we're panning the stage (Shift held), cancel product drag
+                    if (isDraggingStage || (e && e.evt && e.evt.shiftKey)) {
+                        try { this.stopDrag(); } catch(_) {}
+                        return;
+                    }
+                    transformer.nodes([]);
+                });
+                
+                productGroup.on('dragend', function() {
+                    if (currentTool === 'select') {
+                        transformer.nodes([productGroup]);
+                        selectedShape = productGroup;
+                    }
+                    // Sync in-memory placedProducts using local (stage) coordinates
+                    const p = placedProducts.find(p => p.productId === product.productId);
+                    if (p) {
+                        p.x = productGroup.x();
+                        p.y = productGroup.y();
+                    }
+                    layer.draw();
+                });
+                
                 layer.add(productGroup);
             });
             
@@ -633,13 +708,17 @@ async function saveFloorPlan() {
             return null;
         }).filter(Boolean);
         
-        // Get product groups and export their data
+        // Get product groups and export their data (only those still on layer)
         placedProducts = [];
-        layer.find('.Group').forEach(group => {
-            if (group.attrs.productId) {
+        layer.find('.productGroup').forEach(group => {
+            const productId = group && group.attrs ? group.attrs.productId : undefined;
+            if (productId) {
+                const textNode = group.findOne('Text');
+                const fallbackName = (products.find(p => p.id === productId) || {}).name || '';
+                const name = textNode && typeof textNode.text === 'function' ? textNode.text() : fallbackName;
                 placedProducts.push({
-                    productId: group.attrs.productId,
-                    name: group.findOne('Text').text(),
+                    productId: productId,
+                    name: name,
                     x: group.x(),
                     y: group.y()
                 });
@@ -812,12 +891,16 @@ function onDrop(e) {
     }
     
     try {
-        // Get position relative to the canvas container
+        // Compute stage-local coordinates based on container, stage position, and scale
         const rect = stage.container().getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        const pointerX = e.clientX - rect.left;
+        const pointerY = e.clientY - rect.top;
+        const scale = stage.scaleX();
+        const pos = stage.position();
+        const x = (pointerX - pos.x) / scale;
+        const y = (pointerY - pos.y) / scale;
         
-        console.log("Dropping product at position:", x, y);
+        console.log("Dropping product at stage coords:", x, y);
         
         // Create product text
         const productText = new Konva.Text({
@@ -859,8 +942,13 @@ function onDrop(e) {
         productGroup.off('dragstart'); // Clear any existing handlers
         productGroup.off('dragend');
         
-        productGroup.on('dragstart', function() {
+        productGroup.on('dragstart', function(e) {
             console.log('Product drag started');
+            // If we're panning the stage (Shift held), cancel product drag
+            if (isDraggingStage || (e && e.evt && e.evt.shiftKey)) {
+                try { this.stopDrag(); } catch(_) {}
+                return;
+            }
             // Remove the transformer during drag to prevent errors
             transformer.nodes([]);
         });
@@ -874,7 +962,7 @@ function onDrop(e) {
                 selectedShape = productGroup;
             }
             
-            // Update product position in placedProducts array
+            // Update product position in placedProducts using local coordinates
             const product = placedProducts.find(p => p.productId === productId);
             if (product) {
                 product.x = productGroup.x();
@@ -901,6 +989,8 @@ function onDrop(e) {
         console.log("Product placed:", productName, "at", x, y);
         
         // Add to placedProducts array
+    // Ensure we don't duplicate the same productId
+    placedProducts = placedProducts.filter(p => p.productId !== productId);
     placedProducts.push({
         productId: productId,
         name: productName,
@@ -946,7 +1036,7 @@ function viewFloorPlan() {
         });
         
         // Update product groups
-        layer.find('.Group').forEach(group => {
+        layer.find('.productGroup').forEach(group => {
             if (group && typeof group.draggable === 'function') {
                 group.draggable(isEditMode);
             }
