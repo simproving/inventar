@@ -9,9 +9,9 @@
 </head>
 <body>
     <div class="container">
-        <h1>Inventory System</h1>
-        
-        <div class="top-actions">
+        <div class="header-bar">
+            <h1>Inventory System</h1>
+            <div class="top-actions">
             <div class="user-select">
                 <span data-i18n="Current User:">Current User: </span>
                 <select id="userSelect" onchange="changeUser(this.value)"></select>
@@ -22,6 +22,7 @@
             <div class="data-actions">
                 <button onclick="openBarcodeScanner()" data-i18n="Scan Barcode">Scan Barcode</button>
                 <button onclick="openSettings()">⚙️ <span data-i18n="Settings">Settings</span></button>
+            </div>
             </div>
         </div>
 
