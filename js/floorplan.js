@@ -26,7 +26,7 @@ function openFloorPlan() {
     modal.style.display = 'block';
     
     // Set location name
-    const locationName = locations.find(loc => loc.id === currentLocation)?.name || 'Unknown Location';
+    const locationName = locations.find(loc => loc.id === currentLocation)?.name || t('Unknown Location');
     document.getElementById('floorPlanLocationName').textContent = locationName;
     
     // Reset state
@@ -358,7 +358,7 @@ function setupKonvaEvents() {
                 
             } else if (currentTool === 'text') {
                 // Create new text
-                const textContent = prompt("Enter text:", "Text");
+                const textContent = prompt(t('Enter text:'), t('Text'));
                 if (textContent) {
                     selectedShape = new Konva.Text({
                         x: startX,
@@ -684,7 +684,7 @@ async function loadFloorPlan(locationId) {
         }
     } catch (error) {
         console.error('Error loading floor plan:', error);
-        alert('Error loading floor plan: ' + error.message);
+        alert(t('Error loading floor plan:') + ' ' + error.message);
         shapes = [];
         placedProducts = [];
         layer.draw();
@@ -759,9 +759,9 @@ async function saveFloorPlan() {
         if (savedPlan) {
             console.log('Floor plan saved and verified:', savedPlan);
             if (typeof showToast === 'function') {
-                showToast('Floor plan saved successfully!', 'success');
+                showToast(t('Floor plan saved successfully!'), 'success');
             } else {
-                alert('Floor plan saved successfully!');
+                alert(t('Floor plan saved successfully!'));
             }
             // Mark as a change since last export so the button updates
             if (typeof window.incrementUnsavedChanges === 'function') {
@@ -772,7 +772,7 @@ async function saveFloorPlan() {
         }
     } catch (error) {
         console.error('Error saving floor plan:', error);
-        alert('Error saving floor plan: ' + error.message);
+        alert(t('Error saving floor plan:') + ' ' + error.message);
     }
 }
 
@@ -846,7 +846,7 @@ function deleteSelected() {
 }
 
 function clearFloorPlan() {
-    if (confirm('Are you sure you want to clear the entire floor plan?')) {
+    if (confirm(t('Are you sure you want to clear the entire floor plan?'))) {
         konvaShapes = [];
         layer.destroyChildren();
         layer.add(transformer);

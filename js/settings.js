@@ -42,7 +42,7 @@ async function exportData() {
     console.log('Data exported successfully');
   } catch (error) {
     console.error('Error exporting data:', error);
-    alert('Error exporting data: ' + error.message);
+    alert(t('Error exporting data:') + ' ' + error.message);
   }
 }
 
@@ -51,8 +51,8 @@ function importData() {
   if (importFile) {
     importFile.click();
   } else {
-    console.error('Import file input not found');
-    alert('Error: Import functionality not available');
+  console.error('Import file input not found');
+  alert('Error: Import functionality not available');
   }
 }
 
@@ -61,7 +61,7 @@ async function handleImportFile(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (!confirm('Importing data will replace all current data. Continue?')) {
+    if (!confirm(t('confirm_import_replace_all'))) {
       event.target.value = null;
       return;
     }
@@ -120,13 +120,13 @@ async function handleImportFile(event) {
         closeSettings();
       } catch (error) {
         console.error('Error parsing import file:', error);
-        alert('Error importing data: ' + error.message);
+        alert(t('Error importing data:') + ' ' + error.message);
       }
     };
 
     reader.onerror = () => {
       console.error('Error reading file');
-      alert('Error reading file');
+      alert(t('Error reading file'));
     };
 
     reader.readAsText(file);
@@ -140,7 +140,7 @@ async function handleImportFile(event) {
 // Rebuild from History
 function confirmRebuildFromHistory() {
   const proceed = confirm(
-    t('Are you sure you want to rebuild all data from the transaction history? This will overwrite current products, inventory and locations.')
+  t('Are you sure you want to rebuild all data from the transaction history? This will overwrite current products, inventory and locations.')
   );
   if (!proceed) return;
   rebuildFromHistory();
@@ -488,11 +488,11 @@ async function addUserFromSettings() {
   const nameInput = document.getElementById('newUserName');
   const newName = nameInput.value.trim();
   if (!newName) {
-    alert('Please enter a user name');
+    alert(t('Please enter a user name'));
     return;
   }
   if (users.some((user) => user.name === newName)) {
-    alert('A user with this name already exists');
+    alert(t('A user with this name already exists'));
     return;
   }
   const newUser = { id: 'user-' + Date.now(), name: newName };
@@ -509,10 +509,10 @@ async function addUserFromSettings() {
 async function renameUserFromSettings(userId) {
   const user = users.find((u) => u.id === userId);
   if (!user) return;
-  const newName = prompt('Enter new name for ' + user.name + ':', user.name);
+  const newName = prompt(t('Enter new name for {name}:').replace('{name}', user.name), user.name);
   if (newName && newName.trim() !== '') {
     if (users.some((u) => u.id !== userId && u.name === newName)) {
-      alert('A user with this name already exists');
+      alert(t('A user with this name already exists'));
       return;
     }
     const oldName = user.name;
@@ -534,10 +534,10 @@ async function deleteUserFromSettings(userId) {
   const user = users.find((u) => u.id === userId);
   if (!user) return;
   if (users.length <= 1) {
-    alert('Cannot delete the last user.');
+    alert(t('Cannot delete the last user.'));
     return;
   }
-  if (confirm('Are you sure you want to delete user: ' + user.name + '?')) {
+  if (confirm(t('Are you sure you want to delete user: {name}?').replace('{name}', user.name))) {
     users = users.filter((u) => u.id !== userId);
     if (userId === currentUserId) {
       currentUser = users[0].name;
@@ -559,11 +559,11 @@ async function addLocationFromSettings() {
   const nameInput = document.getElementById('newLocationName');
   const newName = nameInput.value.trim();
   if (!newName) {
-    alert('Please enter a location name');
+    alert(t('Please enter a location name'));
     return;
   }
   if (locations.some((loc) => loc.name === newName)) {
-    alert('A location with this name already exists');
+    alert(t('A location with this name already exists'));
     return;
   }
   const newLocationId = String(Date.now());
@@ -584,10 +584,10 @@ async function addLocationFromSettings() {
 async function renameLocationFromSettings(locationId) {
   const location = locations.find((loc) => loc.id === locationId);
   if (!location) return;
-  const newName = prompt('Enter new name for ' + location.name + ':', location.name);
+  const newName = prompt(t('Enter new name for {name}:').replace('{name}', location.name), location.name);
   if (newName && newName.trim() !== '') {
     if (locations.some((loc) => loc.id !== locationId && loc.name === newName)) {
-      alert('A location with this name already exists');
+      alert(t('A location with this name already exists'));
       return;
     }
     const oldName = location.name;
@@ -611,14 +611,13 @@ async function deleteLocationFromSettings(locationId) {
   const location = locations.find((loc) => loc.id === locationId);
   if (!location) return;
   if (locations.length <= 1) {
-    alert('Cannot delete the last location.');
+    alert(t('Cannot delete the last location.'));
     return;
   }
   if (
     confirm(
-      'Are you sure you want to delete location: ' +
-        location.name +
-        '? All inventory items in this location will be deleted.'
+      t('Are you sure you want to delete location: {name}? All inventory items in this location will be deleted.')
+        .replace('{name}', location.name)
     )
   ) {
     inventoryItems = inventoryItems.filter((item) => item.locationId !== locationId);
@@ -642,8 +641,8 @@ async function deleteLocationFromSettings(locationId) {
 }
 
 async function confirmClearData() {
-  if (confirm('Are you sure you want to clear all data? This action cannot be undone.')) {
-    if (confirm('FINAL WARNING: All your data will be permanently deleted. Continue?')) {
+  if (confirm(t('Are you sure you want to clear all data? This action cannot be undone.'))) {
+    if (confirm(t('FINAL WARNING: All your data will be permanently deleted. Continue?'))) {
       try {
         await db.clear('products');
         await db.clear('locations');
@@ -660,10 +659,10 @@ async function confirmClearData() {
         updateLocationSelect();
         updateTable();
         updateHistory();
-        alert('All data has been cleared. The application has been reset to default settings.');
+        alert(t('All data has been cleared. The application has been reset to default settings.'));
       } catch (error) {
         console.error('Error clearing data:', error);
-        alert('Error clearing data: ' + error.message);
+        alert(t('Error clearing data:') + ' ' + error.message);
       }
     }
   }

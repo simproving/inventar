@@ -49,7 +49,7 @@ function checkPendingInvoices() {
 
         invoiceGroup.innerHTML = `
             <div class="invoice-header" onclick="toggleInvoiceContent(this)">
-                <h3>Invoice #${invoice.data.invoiceNumber} - ${formattedDate}</h3>
+                <h3>${t('Invoice #{number} - {date}').replace('{number}', invoice.data.invoiceNumber).replace('{date}', formattedDate)}</h3>
                 <span class="toggle-icon">▼</span>
             </div>
             <div class="invoice-content">
@@ -59,18 +59,18 @@ function checkPendingInvoices() {
                             <div class="invoice-product-info">
                                 <div class="invoice-product-name">${product.nume}</div>
                                 <div class="invoice-product-details">
-                                    Quantity: ${product.bucati} × ${parseFloat(product.pretUnitar).toFixed(2)} RON
+                                    ${t('Quantity')}: ${product.bucati} × ${parseFloat(product.pretUnitar).toFixed(2)} RON
                                 </div>
                             </div>
                         </div>
                     `).join('')}
                 </div>
                 <div class="invoice-total">
-                    Total: ${total.toFixed(2)} RON
+                    ${t('Total:')} ${total.toFixed(2)} RON
                 </div>
                 <div class="invoice-actions">
-                    <button onclick="confirmInvoice('${invoice.key}')" class="btn btn-primary">Add to Inventory</button>
-                    <button onclick="deleteInvoice('${invoice.key}')" class="btn btn-secondary">Delete</button>
+                    <button onclick="confirmInvoice('${invoice.key}')" class="btn btn-primary">${t('Add to Inventory')}</button>
+                    <button onclick="deleteInvoice('${invoice.key}')" class="btn btn-secondary" data-i18n="Delete">${t('Delete')}</button>
                 </div>
             </div>
         `;
@@ -91,7 +91,7 @@ async function confirmInvoice(key) {
     try {
         const invoiceData = JSON.parse(localStorage.getItem(key));
         if (!invoiceData || !invoiceData.products) {
-            throw new Error('Invalid invoice data');
+            throw new Error(t('Invalid invoice data'));
         }
 
         // Process each product in the invoice
@@ -165,15 +165,15 @@ async function confirmInvoice(key) {
         updateTable();
         checkPendingInvoices();
         
-        alert('Invoice products have been added to inventory successfully!');
+        alert(t('Invoice products have been added to inventory successfully!'));
     } catch (error) {
         console.error('Error processing invoice:', error);
-        alert('Error processing invoice: ' + error.message);
+        alert(t('Error processing invoice:') + ' ' + error.message);
     }
 }
 
 function deleteInvoice(key) {
-    if (confirm('Are you sure you want to delete this invoice?')) {
+    if (confirm(t('Are you sure you want to delete this invoice?'))) {
         localStorage.removeItem(key);
         checkPendingInvoices();
     }

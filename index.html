@@ -10,10 +10,10 @@
 <body>
     <div class="container">
         <div class="header-bar">
-            <h1>Inventory System</h1>
+            <h1 data-i18n="Inventory System">Inventory System</h1>
             <div class="top-actions">
             <div class="save-file-action">
-                <button id="saveToFileButton" class="save-file-button" onclick="handleSaveToFileClick()">Save to file (0 changes)</button>
+                <button id="saveToFileButton" class="save-file-button" onclick="handleSaveToFileClick()" data-i18n-title="never_exported">Save to file (0 changes)</button>
             </div>
             <div class="user-select">
                 <span data-i18n="Current User:">Current User: </span>
@@ -35,15 +35,15 @@
         <div id="locationFilterButtons" class="location-filter-buttons"></div>
 
         <div id="pendingInvoices" class="pending-invoices">
-            <h2>Pending Invoices</h2>
+            <h2 data-i18n="Pending Invoices">Pending Invoices</h2>
             <div id="pendingInvoicesList"></div>
         </div>
-        <span>Example: TODAY 100ML 10B125 22B1024 99 B 01 26</span>
+            <span data-i18n="Example:">Example:</span> TODAY 100ML 10B125 22B1024 99 B 01 26
         <div class="add-item-form">
             <input type="text" id="itemName" placeholder="Item Name" data-i18n-placeholder="Item Name">
             <input type="number" id="itemQuantity" placeholder="Quantity" data-i18n-placeholder="Quantity">
             <input type="number" id="itemPrice" placeholder="Price" data-i18n-placeholder="Price">
-            <button onclick="addItem()">Add Item</button>
+            <button onclick="addItem()" data-i18n="Add Item">Add Item</button>
         </div>
 
         <table id="inventoryTable">
@@ -52,7 +52,7 @@
                     <th id="thName" onclick="setSort('name')">Name <span id="sortIconName"></span></th>
                     <th id="thQuantity" onclick="setSort('quantity')">Quantity <span id="sortIconQuantity"></span></th>
                     <th id="thPrice" onclick="setSort('price')">Price <span id="sortIconPrice"></span></th>
-                    <th>Actions</th>
+                    <th data-i18n="Actions">Actions</th>
                 </tr>
             </thead>
             <tbody id="inventoryBody"></tbody>
@@ -60,7 +60,7 @@
         <div id="inventoryPagination" class="pagination-controls"></div>
 
         <div class="history-section">
-            <h2>Change History</h2>
+            <h2 data-i18n="Change History">Change History</h2>
             <div id="historyList"></div>
             <div id="historyPagination" class="pagination-controls"></div>
         </div>
@@ -70,9 +70,9 @@
     <div id="floorPlanModal" class="floor-plan-modal">
         <div class="floor-plan-content">
             <div class="floor-plan-header">
-            <h2>Floor Plan - <span id="floorPlanLocationName"></span></h2>
+            <h2><span data-i18n="Floor Plan">Floor Plan</span> - <span id="floorPlanLocationName"></span></h2>
                 <div class="floor-plan-header-actions">
-                    <button class="save-btn" onclick="saveFloorPlan()">Save Floor Plan</button>
+                    <button class="save-btn" onclick="saveFloorPlan()" data-i18n="Save Floor Plan">Save Floor Plan</button>
                     <span class="floor-plan-close" onclick="closeFloorPlan()">&times;</span>
                 </div>
             </div>
@@ -83,14 +83,14 @@
                     <button class="shape-button" data-tool="rectangle" onclick="selectTool('rectangle')" data-i18n="Rectangle">Rectangle</button>
                     <button class="shape-button" data-tool="circle" onclick="selectTool('circle')" data-i18n="Circle">Circle</button>
                     <button class="shape-button" data-tool="text" onclick="selectTool('text')" data-i18n="Text">Text</button>
-                    <button class="shape-button" data-tool="delete" onclick="selectTool('delete')" data-i18n="Delete Floor Plan">Delete</button>
+                     <button class="shape-button" data-tool="delete" onclick="selectTool('delete')" data-i18n="Delete Floor Plan">Delete</button>
                     <input type="color" class="color-picker" id="shapeColor" value="#CCCCCC">
-                    <div class="zoom-controls">
-                        <button onclick="zoomFloorPlan(-0.1)" class="zoom-button">-</button>
-                        <span id="zoomLevel">100%</span>
-                        <button onclick="zoomFloorPlan(0.1)" class="zoom-button">+</button>
-                        <button onclick="resetZoom()" class="zoom-button" data-i18n="Reset">Reset</button>
-                    </div>
+                     <div class="zoom-controls">
+                         <button onclick="zoomFloorPlan(-0.1)" class="zoom-button">-</button>
+                         <span id="zoomLevel">100%</span>
+                         <button onclick="zoomFloorPlan(0.1)" class="zoom-button">+</button>
+                         <button onclick="resetZoom()" class="zoom-button" data-i18n="Reset">Reset</button>
+                     </div>
                     <div style="flex-grow: 1;"></div>
                     <button onclick="clearFloorPlan()" data-i18n="Clear All">Clear All</button>
                 </div>
@@ -1505,13 +1505,13 @@
                 const displayedLocations = locationFilter ? locations.filter(loc => loc.id === locationFilter) : locations;
                 const quantityHeaderText = locationFilter
                     ? `${(locations.find(l => l.id === locationFilter) || { name: 'Quantity' }).name}: ${entry.quantities[locationFilter] || 0}`
-                    : `Total: ${entry.totalQuantity}`;
+                     : `${t('Total:')} ${entry.totalQuantity}`;
 
                 const detailsHtml = `
                     <div class="item-details" id="details-${product.id}">
                         <div class="item-details-grid">
                             <div class="item-details-section">
-                                <label>Comments:</label>
+                                 <label data-i18n="Comments:">Comments:</label>
                                 <textarea id="comments-${product.id}" onblur="updateComments('${product.id}')">${product.comments || ''}</textarea>
                             </div>
                         </div>
@@ -1523,7 +1523,7 @@
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <span class="editable" onclick="if(!this.querySelector('input'))editField('${product.id}', 'name', this)">${product.name}</span>
                             <button class="toggle-details-btn" onclick="toggleDetails(event, '${product.id}')">▼</button>
-                            <button class="search-name-btn" title="Search for this name" onclick="searchByName('${product.name.replace(/'/g, "\\'")}')" style="background: none; border: none; cursor: pointer; padding: 0; margin-left: 2px;">
+                             <button class="search-name-btn" data-i18n-title="Search for this name" title="Search for this name" onclick="searchByName('${product.name.replace(/'/g, "\\'")}')" style="background: none; border: none; cursor: pointer; padding: 0; margin-left: 2px;">
                                 <span style="font-size: 1em;">🔍</span>
                             </button>
                         </div>
@@ -1555,8 +1555,8 @@
                         <span class="editable" onclick="if(!this.querySelector('input'))editField('${product.id}', 'price', this)">${product.price.toFixed(2)}</span>
                     </td>
                     <td>
-                        <button onclick="deleteItem('${product.id}')">Delete</button>
-                        <button class="barcode-btn" onclick="openBarcodeModal('${product.id}')">${product.barcode ? 'Edit Barcode' : 'Add Barcode'}</button>
+                         <button onclick="deleteItem('${product.id}')" data-i18n="Delete">Delete</button>
+                         <button class="barcode-btn" onclick="openBarcodeModal('${product.id}')">${product.barcode ? t('Edit Barcode') : t('Add Barcode')}</button>
                     </td>
                 `;
                 tbody.appendChild(tr);

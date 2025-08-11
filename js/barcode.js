@@ -35,8 +35,8 @@
              timestamp: new Date().toISOString()
          });
      } else {
-         // Product not found, ask if user wants to add it
-         if (confirm(`No product found with barcode ${barcode}. Would you like to add it?`)) {
+        // Product not found, ask if user wants to add it
+        if (confirm(t('No product found with barcode {barcode}. Would you like to add it?').replace('{barcode}', barcode))) {
              // Pre-fill the add item form
              document.getElementById('itemName').value = `Product ${barcode}`;
              document.getElementById('itemQuantity').value = '1';
@@ -107,20 +107,20 @@
      modal.id = 'assignBarcodeModal';
      modal.className = 'modal';
      
-     modal.innerHTML = `
+      modal.innerHTML = `
          <div class="modal-content">
-             <div class="modal-header">
-                 <h2>Assign Barcode</h2>
+              <div class="modal-header">
+                  <h2 data-i18n="Assign Barcode">Assign Barcode</h2>
                  <span class="close" onclick="closeAssignBarcodeModal()">&times;</span>
              </div>
              <div class="modal-body">
                  <p>Barcode: <strong id="assignBarcodeValue"></strong></p>
-                 <p>Select product to assign this barcode to:</p>
+                  <p data-i18n="Select product to assign this barcode to:">Select product to assign this barcode to:</p>
                  <select id="assignBarcodeProductSelect" class="form-control"></select>
              </div>
              <div class="modal-footer">
-                 <button onclick="assignBarcodeToExistingProduct()">Assign Barcode</button>
-                 <button onclick="closeAssignBarcodeModal()">Cancel</button>
+                  <button onclick="assignBarcodeToExistingProduct()" data-i18n="Assign Barcode">Assign Barcode</button>
+                  <button onclick="closeAssignBarcodeModal()" data-i18n="Cancel">Cancel</button>
              </div>
          </div>
      `;
@@ -163,7 +163,7 @@
      closeBarcodeScanner();
      
      // Show success message
-     alert(`Barcode ${currentScannedBarcode} assigned to ${product.name}`);
+      alert(t('Barcode {barcode} assigned to {name}').replace('{barcode}', currentScannedBarcode).replace('{name}', product.name));
      
      // Update UI
      updateTable();
@@ -209,7 +209,7 @@
      updateTable();
      
      // Show success message
-     alert(`New product created with barcode ${barcode}. Please update the details.`);
+      alert(t('New product created with barcode {barcode}. Please update the details.').replace('{barcode}', barcode));
  }
  
  function closeBarcodeModal() {
@@ -242,8 +242,8 @@
      // Get available video devices
      codeReader.listVideoInputDevices()
          .then(videoInputDevices => {
-             if (videoInputDevices.length === 0) {
-                 alert('No camera devices found');
+            if (videoInputDevices.length === 0) {
+                alert(t('No camera devices found'));
                  cancelBarcodeScanning();
                  return;
              }
@@ -261,13 +261,13 @@
                      // Check if the barcode is already assigned to a different product
                      const existingProduct = products.find(p => p.barcode === barcode && p.id !== productId);
                      if (existingProduct) {
-                         document.getElementById('productResult').innerHTML = `
-                             <div class="alert alert-warning mt-3">
-                                 <p>Barcode ${barcode} is already assigned to product "${existingProduct.name}"</p>
-                                 <button class="btn btn-primary" onclick="useScannedBarcodeForProduct('${barcode}')">Use Anyway</button>
-                                 <button class="btn btn-secondary" onclick="cancelBarcodeScanning()">Cancel</button>
-                             </div>
-                         `;
+                          document.getElementById('productResult').innerHTML = `
+                              <div class=\"alert alert-warning mt-3\">
+                                  <p>${t('Barcode {barcode} is already assigned to product \"{name}\"').replace('{barcode}', barcode).replace('{name}', existingProduct.name)}</p>
+                                  <button class=\"btn btn-primary\" onclick=\"useScannedBarcodeForProduct('${barcode}')\">${t('Use Anyway')}</button>
+                                  <button class=\"btn btn-secondary\" onclick=\"cancelBarcodeScanning()\">${t('Cancel')}</button>
+                              </div>
+                          `;
                      } else {
                          // Use the barcode for the current product
                          useScannedBarcodeForProduct(barcode);
@@ -280,9 +280,9 @@
                  }
              });
          })
-         .catch(err => {
-             console.error('Error accessing camera:', err);
-             alert('Error accessing camera: ' + err);
+            .catch(err => {
+            console.error('Error accessing camera:', err);
+            alert(t('Error accessing camera:') + ' ' + err);
              cancelBarcodeScanning();
          });
  }
@@ -380,7 +380,7 @@
     codeReader.listVideoInputDevices()
         .then(videoInputDevices => {
             if (videoInputDevices.length === 0) {
-                alert('No camera devices found');
+                alert(t('No camera devices found'));
                 closeBarcodeScanner();
                 return;
             }
@@ -393,7 +393,7 @@
                 if (result) {
                     // Barcode found!
                     const barcode = result.getText();
-                    document.getElementById('scannerResult').textContent = `Found barcode: ${barcode}`;
+                    document.getElementById('scannerResult').textContent = t('Found barcode: {barcode}').replace('{barcode}', barcode);
                     
                     // Look up product by barcode
                     const product = products.find(p => p.barcode === barcode);
@@ -402,10 +402,10 @@
                     } else {
                         // No product found with this barcode
                         document.getElementById('productResult').innerHTML = `
-                            <div class="alert alert-warning mt-3">
-                                <p>Product with barcode ${barcode} not found</p>
-                                <button class="btn btn-primary" onclick="assignBarcodeToNewProduct('${barcode}')">Create New Product</button>
-                                <button class="btn btn-secondary" onclick="showBarcodeAssignmentModal('${barcode}')">Assign to Existing Product</button>
+                            <div class=\"alert alert-warning mt-3\">
+                                <p>${t('Product with barcode {barcode} not found').replace('{barcode}', barcode)}</p>
+                                <button class=\"btn btn-primary\" onclick=\"assignBarcodeToNewProduct('${barcode}')\">${t('Create New Product')}</button>
+                                <button class=\"btn btn-secondary\" onclick=\"showBarcodeAssignmentModal('${barcode}')\">${t('Assign to Existing Product')}</button>
                             </div>
                         `;
                     }
@@ -419,7 +419,7 @@
         })
         .catch(err => {
             console.error('Error accessing camera:', err);
-            alert('Error accessing camera: ' + err);
+            alert(t('Error accessing camera:') + ' ' + err);
             closeBarcodeScanner();
         });
 }
@@ -446,7 +446,7 @@ function switchCamera() {
             availableCameras = videoInputDevices;
             
             if (availableCameras.length <= 1) {
-                alert('Only one camera available');
+                alert(t('Only one camera available'));
                 return;
             }
             
@@ -465,7 +465,7 @@ function switchCamera() {
                 if (result) {
                     // Barcode found!
                     const barcode = result.getText();
-                    document.getElementById('scannerResult').textContent = `Found barcode: ${barcode}`;
+                    document.getElementById('scannerResult').textContent = t('Found barcode: {barcode}').replace('{barcode}', barcode);
                     
                     // Look up product by barcode
                     const product = products.find(p => p.barcode === barcode);
@@ -474,10 +474,10 @@ function switchCamera() {
                     } else {
                         // No product found with this barcode
                         document.getElementById('productResult').innerHTML = `
-                            <div class="alert alert-warning mt-3">
-                                <p>Product with barcode ${barcode} not found</p>
-                                <button class="btn btn-primary" onclick="assignBarcodeToNewProduct('${barcode}')">Create New Product</button>
-                                <button class="btn btn-secondary" onclick="showBarcodeAssignmentModal('${barcode}')">Assign to Existing Product</button>
+                            <div class=\"alert alert-warning mt-3\">
+                                <p>${t('Product with barcode {barcode} not found').replace('{barcode}', barcode)}</p>
+                                <button class=\"btn btn-primary\" onclick=\"assignBarcodeToNewProduct('${barcode}')\">${t('Create New Product')}</button>
+                                <button class=\"btn btn-secondary\" onclick=\"showBarcodeAssignmentModal('${barcode}')\">${t('Assign to Existing Product')}</button>
                             </div>
                         `;
                     }
@@ -489,11 +489,11 @@ function switchCamera() {
                 }
             });
             
-            document.getElementById('scanner-status').textContent = `Using camera ${currentCameraIndex + 1} of ${availableCameras.length}`;
+            document.getElementById('scanner-status').textContent = t('Using camera {current} of {total}').replace('{current}', currentCameraIndex + 1).replace('{total}', availableCameras.length);
         })
         .catch(err => {
             console.error('Error accessing cameras:', err);
-            alert('Error accessing cameras: ' + err);
+            alert(t('Error accessing camera:') + ' ' + err);
         });
 }
 
@@ -501,11 +501,7 @@ function switchCamera() {
 function handleProductFoundByBarcode(product) {
     // Display product info
     document.getElementById('productResult').innerHTML = `
-        <div class="alert alert-success mt-3">
-            <h4>${product.name}</h4>
-            <p>Price: ${product.price}</p>
-            <p>Stock: ${product.stock}</p>
-        </div>
+        <div class=\"alert alert-success mt-3\">\n            <h4>${product.name}</h4>\n            <p>${t('Price')}: ${product.price}</p>\n            <p>${t('Quantity')}: ${product.stock ?? 0}</p>\n        </div>
     `;
     
     // Set the product name in the search bar
