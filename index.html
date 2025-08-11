@@ -35,7 +35,7 @@
             <h2>Pending Invoices</h2>
             <div id="pendingInvoicesList"></div>
         </div>
-
+        <span>Example: TODAY 100ML 10B125 22B1024 99 B 01 26</span>
         <div class="add-item-form">
             <input type="text" id="itemName" placeholder="Item Name" data-i18n-placeholder="Item Name">
             <input type="number" id="itemQuantity" placeholder="Quantity" data-i18n-placeholder="Quantity">
@@ -511,13 +511,13 @@
             let price = parseFloat(document.getElementById('itemPrice').value);
             const locationId = locationFilter || currentLocation;
 
-            // Regex to match codes like 4b1123, 4B1123, 4B 1123, etc.
-            const codeRegex = /([0-9]+)[bB]\s*([0-9]{1,2})([0-9]{2})/g;
+            // Regex to match codes like 4b1123, 4B1123, 4B 1123, 10 B 1 23, 99 b 01 26 etc.
+            const codeRegex = /([0-9]+)\s*[bB]\s*([0|1]*[0-2])\s*([0-9]{2})/g;
             let match;
             let codes = [];
-            let nameBase = nameInput;
+            let nameBase = nameInput;   
             // Find all codes and remove them from the name
-            nameBase = nameBase.replace(/(\s*[0-9]+[bB]\s*[0-9]{1,2}[0-9]{2})+/g, '').trim();
+            nameBase = nameBase.replace(codeRegex, '').trim();
             codeRegex.lastIndex = 0;
             while ((match = codeRegex.exec(nameInput)) !== null) {
                 codes.push({
