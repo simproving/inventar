@@ -1721,18 +1721,6 @@
             if (!container) return;
             container.innerHTML = '';
 
-            // Page size selector
-            const pageSizeSelect = document.createElement('select');
-            [5, 10, 20, 50, 100].forEach(size => {
-                const option = document.createElement('option');
-                option.value = size;
-                option.textContent = `${size} ${t('per_page')}`;
-                if (size === pageSize) option.selected = true;
-                pageSizeSelect.appendChild(option);
-            });
-            pageSizeSelect.onchange = (e) => onPageSizeChange(Number(e.target.value));
-            container.appendChild(pageSizeSelect);
-
             // Prev button
             const prevBtn = document.createElement('button');
             prevBtn.textContent = t('pagination_prev');
@@ -1751,6 +1739,23 @@
             nextBtn.disabled = currentPage === totalPages || totalPages === 0;
             nextBtn.onclick = () => onPageChange(currentPage + 1);
             container.appendChild(nextBtn);
+
+            // For space before page selector
+            const spaceSpan = document.createElement('span');
+            spaceSpan.textContent = ' ';
+            container.appendChild(spaceSpan);
+
+            // Page size selector
+            const pageSizeSelect = document.createElement('select');
+            [5, 10, 20, 50, 100].forEach(size => {
+                const option = document.createElement('option');
+                option.value = size;
+                option.textContent = `${size} ${t('per_page')}`;
+                if (size === pageSize) option.selected = true;
+                pageSizeSelect.appendChild(option);
+            });
+            pageSizeSelect.onchange = (e) => onPageSizeChange(Number(e.target.value));
+            container.appendChild(pageSizeSelect);
         }
 
     </script>
