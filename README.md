@@ -1,94 +1,118 @@
 
-# Inventory Management System - Project Requirements & Features
+# Inventory System (Offline, Browser)
 
-## Project Overview
-The application should provide a comprehensive solution for tracking products across multiple locations, managing stock levels, and recording inventory changes over time.
+An offline-first, single-page inventory manager that runs entirely in the browser. No server required. Data is stored in the browser via IndexedDB, and you can import/export JSON backups at any time.
 
-## Core Features
+## Highlights
 
-### Product Management
-1. Add new products with name, price, and initial quantity
-2. Edit existing product details (name, price)
-3. Delete products with confirmation dialog
-4. Support for product search functionality
-5. Optional support for product comments
+- **Offline-first storage**: IndexedDB via the `idb` helper library
+- **Multi-location**: Track products across multiple locations
+- **Inventory history**: Append-only transactions with rebuild-from-history
+- **Floor plan editor**: Visual placement of products per location using Konva
+- **Barcode scanning**: ZXing-based scanner (camera permissions required)
+- **Import/Export**: Backup/restore all app data as JSON
+- **Users and locations**: Manage users and locations in-app
+- **Search, sort, pagination**: Quickly find and navigate items
+- **Internationalization**: English and Romanian UI, switchable at runtime
+- **Theme**: Light/Dark toggle
+- **Toasts and confirmations**: Clear feedback and safe destructive actions
 
-### Location Management
-1. Create locations with custom or default names
-2. Rename existing locations
-3. Delete locations with appropriate safeguards
-4. Visual interface showing all available locations
+## Getting Started
 
-### Inventory Tracking
-1. Display total quantity of each product across all locations
-2. Track product quantities per location
-3. Increment/decrement quantities with intuitive controls
-4. Prevent negative quantities (disable decrement when at zero)
-5. Support for quick quantity changes with debounced updates
+This is a static web app.
 
-### User Interface
-1. Clean, responsive dashboard layout
-3. Tabular view of inventory with sorting capabilities
-6. Confirmation dialogs for destructive actions
-7. Toast notifications for action feedback
+1. Open `index.html` in a modern browser (Chrome, Edge, Firefox, Safari).
+2. Grant camera permission when using the barcode scanner.
+3. Your data is stored locally in the browser. Clearing site data will reset the app.
 
-### Database & Storage
-1. IndexedDB implementation for offline capability
-2. Data structure supporting:
-   - Products (id, name, price, barcode, comments)
-   - Locations (id, name)
-   - Inventory items (id, productId, locationId, quantity)
-   - Transaction history
-   - Users (id, name)
-   - Floorplan
+Optional: You can use any static file server during development, but it is not required.
 
-3. CRUD operations for all entity types
-4. Data integrity when updating related records
+## UI Overview
 
-## Technical Requirements
+- Top bar: Save-to-file, user select, floor plan, scanner, settings
+- Search: Filter items by name
+- Table: Sortable columns for name, quantity, and price; pagination controls
+- Change history: Paginated list of transactions
+- Modals: Floor plan, barcode assign/scan, settings (Theme, Data, Users, Locations)
 
-### Data Layer
-1. IndexedDB for persistent storage
-4. Error handling for database operations
-5. Loading state management
+## Data Model (IndexedDB)
 
-### Data Integrity
-1. Ensure product updates cascade across related inventory items
-2. Maintain consistent product information across locations
-3. Prevent data loss during location deletion
-4. Transaction history recording for inventory changes
+Database name: `inventoryDB` (version 4)
 
-### User Experience
-1. Fast initial loading time
-2. Responsive design for various screen sizes
-3. Intuitive UI with clear action buttons
-4. Helpful error messages
-5. confirmation for destructive actions
-6. Search functionality for larger inventories
+- `products` (keyPath: `id`)
+  - Index: `name`
+  - Shape: `{ id, name, price, barcode, comments }`
+- `locations` (keyPath: `id`)
+  - Index: `name`
+  - Shape: `{ id, name }`
+- `inventory` (keyPath: `id`)
+  - Indexes: `productId`, `locationId`, `product_location` (unique on `[productId, locationId]`)
+  - Shape: `{ id, productId, locationId, quantity }`
+- `transactions` (keyPath: `timestamp`)
+  - Append-only change log
+  - Used by “Rebuild from History” to regenerate products/locations/inventory
+- `floorPlans` (keyPath: `locationId`)
+  - Konva JSON representing shapes and placed products for a location
+- `users` (keyPath: `id`)
+  - Shape: `{ id, name }`
 
-## Implementation Details
+## Features in Detail
 
-### Database Schema
-1. Products table (id, name, price, optional: comments)
-2. Locations table (id, name)
-3. Inventory table (id, productId, locationId, quantity)
-4. Transaction table (for tracking changes)
-5. Users table (id, name)
+- **Save to file**: Exports a snapshot as `inventory_export_YYYY-MM-DD.json`
+- **Import from JSON**: Replaces all current data after confirmation
+- **Rebuild from History**: Reconstructs state from the transaction log
+- **Floor plan**:
+  - Zoom with mouse wheel (0.1x–3x)
+  - Hold Shift to pan the canvas
+  - Select, move, resize, rotate shapes; place products on the map
+- **Barcode scanner**: Uses ZXing in the browser; assign barcodes to products
+- **Internationalization**: Language switch in Settings (English, Română)
 
-## Optional Extensions
-1. Import/export functionality for inventory data
-2. Barcode scanning support
-3. User authentication and role-based permissions
-4. Advanced reporting and analytics
-5. Low stock alerts/notifications
-6. Mobile-optimized views
-7. Multi-language support
-8. Dark/light theme toggle
-9. Customizable dashboard widgets
+## Tech Stack
 
-This inventory management system should prioritize usability, performance, and data integrity, while maintaining a clean and modern user interface. The offline-first approach using IndexedDB ensures the application remains functional without an internet connection.
+- HTML, CSS, vanilla JavaScript
+- IndexedDB via `idb` (CDN)
+- Konva (CDN) for canvas-based floor plans
+- ZXing (ESM CDN) for barcode scanning
+- Jest + jsdom for unit tests
 
+## Development
 
+No build step is required for the app itself. Open `index.html` directly or via a static file server.
+
+### Run tests
+
+Requires Node.js. Install dev dependencies and run:
+
+```bash
+npm install
+npm test
+```
+
+The test runner is configured via `jest.config.cjs` and uses `jest-environment-jsdom`.
+
+## Project Structure (top-level)
+
+- `index.html`: Main SPA entry
+- `style.css`: Styles for the application
+- `js/`
+  - `db.js`: IndexedDB initialization and helpers
+  - `localization.js`: i18n (en, ro) and runtime switching
+  - `floorplan.js`: Konva floor plan editor and product placement
+  - `settings.js`: Export/import, rebuild-from-history, and settings actions
+  - `toast.js`: Lightweight toast notifications
+- `__tests__/`: Jest tests
+- `package.json`: Test scripts and dev deps
+
+## Data Safety and Privacy
+
+- All data stays in your browser. To reset, clear site data or use Settings → Clear Database.
+- Export your data regularly for backups.
+
+## Known Limitations
+
+- Camera access is required for barcode scanning.
+- Clearing site data or using a different browser/profile will not preserve your inventory.
 
 # Run tests
 node ./node_modules/jest/bin/jest.js --config jest.config.cjs --runInBand --verbose
