@@ -199,6 +199,10 @@ const translations = {
     }
 };
 
+// Validation / error messages
+translations.en['error_name_prefix'] = 'Name must start with YY-MM (e.g., 25-10 or 24-01)';
+translations.ro['error_name_prefix'] = 'Numele trebuie să înceapă cu AA-LL (ex.: 25-10 sau 24-01)';
+
 // Current language variable
 let currentLanguage = localStorage.getItem('language') || navigator.language.slice(0,2) || 'en';
 if (!['en','ro'].includes(currentLanguage)) currentLanguage = 'en';

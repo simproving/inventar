@@ -590,6 +590,11 @@
 
             // Fallback to default logic if no codes found
             const name = nameInput;
+            // Enforce YY-MM at start (e.g., 25-10, 24-01)
+            if (!/^\d{2}-\d{2}/.test(name)) {
+                alert(t('error_name_prefix'));
+                return;
+            }
             const quantity = parseInt(quantityInput);
             if (!name || isNaN(quantity) || isNaN(price) || quantity < 0 || price < 0) {
                 alert(t('Please fill all fields with valid values'));
@@ -736,6 +741,12 @@
                     }
                 } else if (field === 'name') {
                     const newName = newValue.trim();
+                    // Enforce YY-MM at start (e.g., 25-10, 24-01)
+                    if (!/^\d{2}-\d{2}/.test(newName)) {
+                        alert(t('error_name_prefix'));
+                        element.textContent = currentValue;
+                        return;
+                    }
                     if (newName) {
                         const oldName = product.name;
                         product.name = newName;
