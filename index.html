@@ -819,11 +819,16 @@
         function toggleDetails(event, id) {
             const details = document.getElementById(`details-${id}`);
             const button = event.target;
+            // Find the corresponding details row (next sibling of the item row)
+            const itemRow = button.closest('tr');
+            const detailsRow = itemRow ? itemRow.nextElementSibling : null;
             if (details.classList.contains('show')) {
                 details.classList.remove('show');
+                if (detailsRow) detailsRow.classList.remove('visible');
                 button.textContent = '▼';
             } else {
                 details.classList.add('show');
+                if (detailsRow) detailsRow.classList.add('visible');
                 button.textContent = '▲';
             }
         }

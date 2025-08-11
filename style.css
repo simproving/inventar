@@ -205,7 +205,7 @@ table {
 }
 
 th, td {
-    padding: 12px;
+    padding: 1px;
     text-align: left;
     border-bottom: 1px solid var(--border-color);
 }
@@ -375,7 +375,12 @@ tr:hover {
 }
 
 .item-details-row {
+    display: none;
     background-color: var(--header-bg);
+}
+
+.item-details-row.visible {
+    display: table-row;
 }
 
 .item-details-row .item-details {
