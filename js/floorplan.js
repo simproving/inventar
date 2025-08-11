@@ -763,6 +763,10 @@ async function saveFloorPlan() {
             } else {
                 alert('Floor plan saved successfully!');
             }
+            // Mark as a change since last export so the button updates
+            if (typeof window.incrementUnsavedChanges === 'function') {
+                window.incrementUnsavedChanges(1);
+            }
         } else {
             throw new Error('Floor plan was not saved correctly');
         }

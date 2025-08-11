@@ -99,6 +99,11 @@ const translations = {
         'pagination_prev': 'Prev',
         'pagination_next': 'Next',
         'pagination_page_of': 'Page {current} of {total}'
+        ,
+        'save_to_file': 'Save to file ({count} changes)',
+        'last_export': 'Last export: {date}',
+        'never_exported': 'Never exported',
+        'export_success': 'Exported to file successfully'
     },
     ro: {
         'Inventory System': 'Sistem Inventar',
@@ -196,6 +201,11 @@ const translations = {
         'pagination_prev': 'Înapoi',
         'pagination_next': 'Înainte',
         'pagination_page_of': 'Pagina {current} din {total}'
+        ,
+        'save_to_file': 'Salvează în fișier ({count} modificări)',
+        'last_export': 'Ultimul export: {date}',
+        'never_exported': 'Nu a fost exportat niciodată',
+        'export_success': 'Exportat în fișier cu succes'
     }
 };
 
@@ -253,6 +263,8 @@ function updateTranslations() {
     // Update dynamic user/location lists if functions exist
     if (typeof updateUsersList === 'function') updateUsersList();
     if (typeof updateLocationsList === 'function') updateLocationsList();
+    // Update dynamic save-to-file button label if available
+    if (typeof updateSaveToFileButton === 'function') updateSaveToFileButton();
 }
 
 // Populates the language select dropdown

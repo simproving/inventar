@@ -12,6 +12,9 @@
         <div class="header-bar">
             <h1>Inventory System</h1>
             <div class="top-actions">
+            <div class="save-file-action">
+                <button id="saveToFileButton" class="save-file-button" onclick="handleSaveToFileClick()">Save to file (0 changes)</button>
+            </div>
             <div class="user-select">
                 <span data-i18n="Current User:">Current User: </span>
                 <select id="userSelect" onchange="changeUser(this.value)"></select>
@@ -267,6 +270,70 @@
         let currentTheme = localStorage.getItem('theme') || 'light';
         let locationFilter = null; // null = all, or location id
 
+        // Track last export time and unsaved change count (since last export)
+        let lastExportISO = localStorage.getItem('lastExportISO') || null;
+        let unsavedChangeCount = 0;
+
+        function updateSaveToFileButton() {
+            const btn = document.getElementById('saveToFileButton');
+            if (!btn) return;
+            // Localized label with placeholder
+            const label = (typeof t === 'function' ? t('save_to_file') : 'Save to file ({count} changes)')
+                .replace('{count}', String(unsavedChangeCount));
+            btn.textContent = label;
+            // Localized tooltip
+            const tipKey = lastExportISO ? 'last_export' : 'never_exported';
+            const tipRaw = typeof t === 'function' ? t(tipKey) : (lastExportISO ? 'Last export: {date}' : 'Never exported');
+            btn.title = lastExportISO ? tipRaw.replace('{date}', formatDate(lastExportISO)) : tipRaw;
+        }
+
+        function recalcUnsavedChangeCount() {
+            try {
+                if (!lastExportISO || !Array.isArray(transactions)) {
+                    unsavedChangeCount = 0;
+                } else {
+                    const lastTs = new Date(lastExportISO).getTime();
+                    unsavedChangeCount = transactions.filter(tx => {
+                        const ts = tx && tx.timestamp ? new Date(tx.timestamp).getTime() : 0;
+                        return ts > lastTs;
+                    }).length;
+                }
+            } catch (_) {
+                unsavedChangeCount = 0;
+            }
+            updateSaveToFileButton();
+        }
+
+        async function handleSaveToFileClick() {
+            try {
+                if (typeof exportData === 'function') {
+                    await exportData();
+                }
+                lastExportISO = new Date().toISOString();
+                localStorage.setItem('lastExportISO', lastExportISO);
+                unsavedChangeCount = 0;
+                updateSaveToFileButton();
+                if (typeof showToast === 'function') {
+                    const msg = typeof t === 'function' ? t('export_success') : 'Exported to file successfully';
+                    showToast(msg, 'success');
+                }
+            } catch (error) {
+                console.error('Error exporting to file:', error);
+                alert('Error exporting to file: ' + (error && error.message ? error.message : error));
+            }
+        }
+
+        // Expose a helper for other modules (e.g., floorplan) to mark changes
+        window.incrementUnsavedChanges = function(n = 1) {
+            try {
+                const delta = typeof n === 'number' && isFinite(n) ? n : 1;
+                unsavedChangeCount += delta;
+            } catch (_) {
+                unsavedChangeCount += 1;
+            }
+            updateSaveToFileButton();
+        }
+
         // Set up theme on initial load
         function applyTheme() {
             if (currentTheme === 'dark') {
@@ -421,6 +488,8 @@
                 updateLocationSelect();
                 updateTable();
                 updateHistory();
+                // Initialize unsaved change counter based on last export time
+                recalcUnsavedChangeCount();
             } catch (error) {
                 console.error('Error initializing database:', error);
                 alert('Error loading data. Using default values.');
@@ -437,6 +506,7 @@
                 updateLocationSelect();
                 updateTable();
                 updateHistory();
+                recalcUnsavedChangeCount();
             }
         };
 
@@ -1320,6 +1390,10 @@
             transactions.push(change);
             await save();
             updateHistory();
+            // Count this as an unsaved change since last export
+            if (typeof window.incrementUnsavedChanges === 'function') {
+                window.incrementUnsavedChanges(1);
+            }
         }
 
         document.getElementById('searchInput').addEventListener('input', function() {
