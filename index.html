@@ -770,18 +770,40 @@
             if (!product) return;
 
             const currentValue = element.textContent;
+            // Measure current rendered width before replacing content
+            const originalRect = element.getBoundingClientRect();
+            const originalWidthPx = Math.ceil(originalRect.width);
             const input = document.createElement('input');
             input.type = field === 'price' ? 'number' : field === 'quantity' ? 'number' : 'text';
             input.step = field === 'price' ? '0.01' : '1';
             input.min = field === 'quantity' || field === 'price' ? '0' : '';
             input.value = currentValue;
             input.className = 'editable editing';
+            // If editing the product name, size input to match the current text width
+            if (field === 'name') {
+                const computedStyle = window.getComputedStyle(element);
+                // Match font so the width visually aligns
+                input.style.font = computedStyle.font;
+                input.style.letterSpacing = computedStyle.letterSpacing;
+                input.style.lineHeight = computedStyle.lineHeight;
+                input.style.boxSizing = 'content-box';
+            }
             
             element.textContent = '';
             element.appendChild(input);
+            if (field === 'name') {
+                const paddingBuffer = 6; // small buffer so caret isn't flush to the edge
+                const targetWidth = Math.max(20, originalWidthPx + paddingBuffer);
+                input.style.width = `${targetWidth}px`;
+            }
             input.focus();
 
+            // Ensure the save handler runs only once (prevents double alerts on Enter + blur)
+            let hasSaved = false;
+
             async function saveEdit() {
+                if (hasSaved) return;
+                hasSaved = true;
                 const newValue = input.value;
                 if (newValue === currentValue) {
                     element.textContent = currentValue;
