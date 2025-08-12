@@ -847,10 +847,11 @@
                         await addToHistory({
                             type: 'edit_product',
                             productId: product.id,
-                            productName: newName,
+                             productName: newName,
                             field: 'name',
                             oldValue: oldName,
-                            newValue: newName,
+                             newValue: newName,
+                             locationId: currentLocation,
                             timestamp: new Date().toISOString()
                         });
                         
@@ -1320,7 +1321,13 @@
                                 .replace('{field}', transaction.field)
                                 .replace('{productName}', transaction.productName)
                                 .replace('{oldValue}', transaction.oldValue)
-                                .replace('{newValue}', transaction.newValue);
+                                 .replace('{newValue}', transaction.newValue);
+                             
+                             // When a product name is edited, include the location (if available)
+                             if (transaction.field === 'name' && transaction.locationId) {
+                                 const locName = getLocationName(transaction.locationId);
+                                 changeText += t('in_location').replace('{locationName}', locName);
+                             }
                             break;
                         case 'update_details':
                             changeText = t('log_update_details')
