@@ -1,0 +1,1218 @@
+
+> inventar@1.0.0 test
+> jest
+
+  console.log
+    Before addItem call: {
+      productsLength: 0,
+      itemName: 'Test Item 4b1123',
+      itemQuantity: '10',
+      itemPrice: '15.50'
+    }
+
+      at Object.log (__tests__/addItem.test.js:155:21)
+
+  console.log
+    Saving data to IndexedDB: { products: 1, locations: 0, inventory: 1, transactions: 1 }
+
+      at save (evalmachine.<anonymous>:261:17)
+
+  console.log
+    Data saved to products successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Products saved successfully
+
+      at save (evalmachine.<anonymous>:271:21)
+
+  console.log
+    Data saved to locations successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Locations saved successfully
+
+      at save (evalmachine.<anonymous>:280:21)
+
+  console.log
+    Data saved to inventory successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Inventory saved successfully
+
+      at save (evalmachine.<anonymous>:289:21)
+
+  console.log
+    Data saved to transactions successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Transactions saved successfully
+
+      at save (evalmachine.<anonymous>:298:21)
+
+  console.log
+    All data saved successfully
+
+      at save (evalmachine.<anonymous>:305:17)
+
+  console.log
+    Saving data to IndexedDB: { products: 1, locations: 0, inventory: 1, transactions: 1 }
+
+      at save (evalmachine.<anonymous>:261:17)
+
+  console.log
+    Data saved to products successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Products saved successfully
+
+      at save (evalmachine.<anonymous>:271:21)
+
+  console.log
+    Data saved to locations successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Locations saved successfully
+
+      at save (evalmachine.<anonymous>:280:21)
+
+  console.log
+    Data saved to inventory successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Inventory saved successfully
+
+      at save (evalmachine.<anonymous>:289:21)
+
+  console.log
+    Data saved to transactions successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Transactions saved successfully
+
+      at save (evalmachine.<anonymous>:298:21)
+
+  console.log
+    All data saved successfully
+
+      at save (evalmachine.<anonymous>:305:17)
+
+  console.log
+    addItem returned: undefined
+
+      at Object.log (__tests__/addItem.test.js:165:25)
+
+  console.log
+    After addItem call: { productsLength: 0, products: [], inventoryItemsLength: 0 }
+
+      at Object.log (__tests__/addItem.test.js:170:21)
+
+  console.log
+    Saving data to IndexedDB: { products: 1, locations: 0, inventory: 1, transactions: 1 }
+
+      at save (evalmachine.<anonymous>:261:17)
+
+  console.log
+    Data saved to products successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Products saved successfully
+
+      at save (evalmachine.<anonymous>:271:21)
+
+  console.log
+    Data saved to locations successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Locations saved successfully
+
+      at save (evalmachine.<anonymous>:280:21)
+
+  console.log
+    Data saved to inventory successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Inventory saved successfully
+
+      at save (evalmachine.<anonymous>:289:21)
+
+  console.log
+    Data saved to transactions successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Transactions saved successfully
+
+      at save (evalmachine.<anonymous>:298:21)
+
+  console.log
+    All data saved successfully
+
+      at save (evalmachine.<anonymous>:305:17)
+
+  console.log
+    Saving data to IndexedDB: { products: 2, locations: 0, inventory: 2, transactions: 2 }
+
+      at save (evalmachine.<anonymous>:261:17)
+
+  console.log
+    Data saved to products successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Products saved successfully
+
+      at save (evalmachine.<anonymous>:271:21)
+
+  console.log
+    Data saved to locations successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Locations saved successfully
+
+      at save (evalmachine.<anonymous>:280:21)
+
+  console.log
+    Data saved to inventory successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Inventory saved successfully
+
+      at save (evalmachine.<anonymous>:289:21)
+
+  console.log
+    Data saved to transactions successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Transactions saved successfully
+
+      at save (evalmachine.<anonymous>:298:21)
+
+  console.log
+    All data saved successfully
+
+      at save (evalmachine.<anonymous>:305:17)
+
+  console.log
+    Saving data to IndexedDB: { products: 2, locations: 0, inventory: 2, transactions: 2 }
+
+      at save (evalmachine.<anonymous>:261:17)
+
+  console.log
+    Data saved to products successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Products saved successfully
+
+      at save (evalmachine.<anonymous>:271:21)
+
+  console.log
+    Data saved to locations successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Locations saved successfully
+
+      at save (evalmachine.<anonymous>:280:21)
+
+  console.log
+    Data saved to inventory successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Inventory saved successfully
+
+      at save (evalmachine.<anonymous>:289:21)
+
+  console.log
+    Data saved to transactions successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Transactions saved successfully
+
+      at save (evalmachine.<anonymous>:298:21)
+
+  console.log
+    All data saved successfully
+
+      at save (evalmachine.<anonymous>:305:17)
+
+  console.log
+    Saving data to IndexedDB: { products: 1, locations: 0, inventory: 1, transactions: 1 }
+
+      at save (evalmachine.<anonymous>:261:17)
+
+  console.log
+    Data saved to products successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Products saved successfully
+
+      at save (evalmachine.<anonymous>:271:21)
+
+  console.log
+    Data saved to locations successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Locations saved successfully
+
+      at save (evalmachine.<anonymous>:280:21)
+
+  console.log
+    Data saved to inventory successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Inventory saved successfully
+
+      at save (evalmachine.<anonymous>:289:21)
+
+  console.log
+    Data saved to transactions successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Transactions saved successfully
+
+      at save (evalmachine.<anonymous>:298:21)
+
+  console.log
+    All data saved successfully
+
+      at save (evalmachine.<anonymous>:305:17)
+
+  console.log
+    Saving data to IndexedDB: { products: 1, locations: 0, inventory: 1, transactions: 1 }
+
+      at save (evalmachine.<anonymous>:261:17)
+
+  console.log
+    Data saved to products successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Products saved successfully
+
+      at save (evalmachine.<anonymous>:271:21)
+
+  console.log
+    Data saved to locations successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Locations saved successfully
+
+      at save (evalmachine.<anonymous>:280:21)
+
+  console.log
+    Data saved to inventory successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Inventory saved successfully
+
+      at save (evalmachine.<anonymous>:289:21)
+
+  console.log
+    Data saved to transactions successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Transactions saved successfully
+
+      at save (evalmachine.<anonymous>:298:21)
+
+  console.log
+    All data saved successfully
+
+      at save (evalmachine.<anonymous>:305:17)
+
+  console.log
+    Saving data to IndexedDB: { products: 1, locations: 0, inventory: 1, transactions: 1 }
+
+      at save (evalmachine.<anonymous>:261:17)
+
+  console.log
+    Data saved to products successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Products saved successfully
+
+      at save (evalmachine.<anonymous>:271:21)
+
+  console.log
+    Data saved to locations successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Locations saved successfully
+
+      at save (evalmachine.<anonymous>:280:21)
+
+  console.log
+    Data saved to inventory successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Inventory saved successfully
+
+      at save (evalmachine.<anonymous>:289:21)
+
+  console.log
+    Data saved to transactions successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Transactions saved successfully
+
+      at save (evalmachine.<anonymous>:298:21)
+
+  console.log
+    All data saved successfully
+
+      at save (evalmachine.<anonymous>:305:17)
+
+  console.log
+    Saving data to IndexedDB: { products: 1, locations: 0, inventory: 1, transactions: 1 }
+
+      at save (evalmachine.<anonymous>:261:17)
+
+  console.log
+    Data saved to products successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Products saved successfully
+
+      at save (evalmachine.<anonymous>:271:21)
+
+  console.log
+    Data saved to locations successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Locations saved successfully
+
+      at save (evalmachine.<anonymous>:280:21)
+
+  console.log
+    Data saved to inventory successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Inventory saved successfully
+
+      at save (evalmachine.<anonymous>:289:21)
+
+  console.log
+    Data saved to transactions successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Transactions saved successfully
+
+      at save (evalmachine.<anonymous>:298:21)
+
+  console.log
+    All data saved successfully
+
+      at save (evalmachine.<anonymous>:305:17)
+
+  console.log
+    Saving data to IndexedDB: { products: 1, locations: 0, inventory: 1, transactions: 1 }
+
+      at save (evalmachine.<anonymous>:261:17)
+
+  console.log
+    Data saved to products successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Products saved successfully
+
+      at save (evalmachine.<anonymous>:271:21)
+
+  console.log
+    Data saved to locations successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Locations saved successfully
+
+      at save (evalmachine.<anonymous>:280:21)
+
+  console.log
+    Data saved to inventory successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Inventory saved successfully
+
+      at save (evalmachine.<anonymous>:289:21)
+
+  console.log
+    Data saved to transactions successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Transactions saved successfully
+
+      at save (evalmachine.<anonymous>:298:21)
+
+  console.log
+    All data saved successfully
+
+      at save (evalmachine.<anonymous>:305:17)
+
+  console.log
+    Saving data to IndexedDB: { products: 1, locations: 0, inventory: 1, transactions: 1 }
+
+      at save (evalmachine.<anonymous>:261:17)
+
+  console.log
+    Data saved to products successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Products saved successfully
+
+      at save (evalmachine.<anonymous>:271:21)
+
+  console.log
+    Data saved to locations successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Locations saved successfully
+
+      at save (evalmachine.<anonymous>:280:21)
+
+  console.log
+    Data saved to inventory successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Inventory saved successfully
+
+      at save (evalmachine.<anonymous>:289:21)
+
+  console.log
+    Data saved to transactions successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Transactions saved successfully
+
+      at save (evalmachine.<anonymous>:298:21)
+
+  console.log
+    All data saved successfully
+
+      at save (evalmachine.<anonymous>:305:17)
+
+  console.log
+    Saving data to IndexedDB: { products: 1, locations: 0, inventory: 1, transactions: 1 }
+
+      at save (evalmachine.<anonymous>:261:17)
+
+  console.log
+    Data saved to products successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Products saved successfully
+
+      at save (evalmachine.<anonymous>:271:21)
+
+  console.log
+    Data saved to locations successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Locations saved successfully
+
+      at save (evalmachine.<anonymous>:280:21)
+
+  console.log
+    Data saved to inventory successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Inventory saved successfully
+
+      at save (evalmachine.<anonymous>:289:21)
+
+  console.log
+    Data saved to transactions successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Transactions saved successfully
+
+      at save (evalmachine.<anonymous>:298:21)
+
+  console.log
+    All data saved successfully
+
+      at save (evalmachine.<anonymous>:305:17)
+
+  console.log
+    Saving data to IndexedDB: { products: 1, locations: 0, inventory: 1, transactions: 1 }
+
+      at save (evalmachine.<anonymous>:261:17)
+
+  console.log
+    Data saved to products successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Products saved successfully
+
+      at save (evalmachine.<anonymous>:271:21)
+
+  console.log
+    Data saved to locations successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Locations saved successfully
+
+      at save (evalmachine.<anonymous>:280:21)
+
+  console.log
+    Data saved to inventory successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Inventory saved successfully
+
+      at save (evalmachine.<anonymous>:289:21)
+
+  console.log
+    Data saved to transactions successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Transactions saved successfully
+
+      at save (evalmachine.<anonymous>:298:21)
+
+  console.log
+    All data saved successfully
+
+      at save (evalmachine.<anonymous>:305:17)
+
+  console.log
+    Saving data to IndexedDB: { products: 1, locations: 0, inventory: 1, transactions: 1 }
+
+      at save (evalmachine.<anonymous>:261:17)
+
+  console.log
+    Data saved to products successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Products saved successfully
+
+      at save (evalmachine.<anonymous>:271:21)
+
+  console.log
+    Data saved to locations successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Locations saved successfully
+
+      at save (evalmachine.<anonymous>:280:21)
+
+  console.log
+    Data saved to inventory successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Inventory saved successfully
+
+      at save (evalmachine.<anonymous>:289:21)
+
+  console.log
+    Data saved to transactions successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Transactions saved successfully
+
+      at save (evalmachine.<anonymous>:298:21)
+
+  console.log
+    All data saved successfully
+
+      at save (evalmachine.<anonymous>:305:17)
+
+  console.log
+    Saving data to IndexedDB: { products: 1, locations: 0, inventory: 1, transactions: 1 }
+
+      at save (evalmachine.<anonymous>:261:17)
+
+  console.log
+    Data saved to products successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Products saved successfully
+
+      at save (evalmachine.<anonymous>:271:21)
+
+  console.log
+    Data saved to locations successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Locations saved successfully
+
+      at save (evalmachine.<anonymous>:280:21)
+
+  console.log
+    Data saved to inventory successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Inventory saved successfully
+
+      at save (evalmachine.<anonymous>:289:21)
+
+  console.log
+    Data saved to transactions successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Transactions saved successfully
+
+      at save (evalmachine.<anonymous>:298:21)
+
+  console.log
+    All data saved successfully
+
+      at save (evalmachine.<anonymous>:305:17)
+
+  console.log
+    Saving data to IndexedDB: { products: 1, locations: 0, inventory: 1, transactions: 1 }
+
+      at save (evalmachine.<anonymous>:261:17)
+
+  console.log
+    Data saved to products successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Products saved successfully
+
+      at save (evalmachine.<anonymous>:271:21)
+
+  console.log
+    Data saved to locations successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Locations saved successfully
+
+      at save (evalmachine.<anonymous>:280:21)
+
+  console.log
+    Data saved to inventory successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Inventory saved successfully
+
+      at save (evalmachine.<anonymous>:289:21)
+
+  console.log
+    Data saved to transactions successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Transactions saved successfully
+
+      at save (evalmachine.<anonymous>:298:21)
+
+  console.log
+    All data saved successfully
+
+      at save (evalmachine.<anonymous>:305:17)
+
+  console.log
+    Saving data to IndexedDB: { products: 1, locations: 0, inventory: 1, transactions: 1 }
+
+      at save (evalmachine.<anonymous>:261:17)
+
+  console.log
+    Data saved to products successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Products saved successfully
+
+      at save (evalmachine.<anonymous>:271:21)
+
+  console.log
+    Data saved to locations successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Locations saved successfully
+
+      at save (evalmachine.<anonymous>:280:21)
+
+  console.log
+    Data saved to inventory successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Inventory saved successfully
+
+      at save (evalmachine.<anonymous>:289:21)
+
+  console.log
+    Data saved to transactions successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Transactions saved successfully
+
+      at save (evalmachine.<anonymous>:298:21)
+
+  console.log
+    All data saved successfully
+
+      at save (evalmachine.<anonymous>:305:17)
+
+  console.log
+    Saving data to IndexedDB: { products: 1, locations: 0, inventory: 1, transactions: 1 }
+
+      at save (evalmachine.<anonymous>:261:17)
+
+  console.log
+    Data saved to products successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Products saved successfully
+
+      at save (evalmachine.<anonymous>:271:21)
+
+  console.log
+    Data saved to locations successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Locations saved successfully
+
+      at save (evalmachine.<anonymous>:280:21)
+
+  console.log
+    Data saved to inventory successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Inventory saved successfully
+
+      at save (evalmachine.<anonymous>:289:21)
+
+  console.log
+    Data saved to transactions successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Transactions saved successfully
+
+      at save (evalmachine.<anonymous>:298:21)
+
+  console.log
+    All data saved successfully
+
+      at save (evalmachine.<anonymous>:305:17)
+
+  console.log
+    Saving data to IndexedDB: { products: 1, locations: 0, inventory: 1, transactions: 1 }
+
+      at save (evalmachine.<anonymous>:261:17)
+
+  console.log
+    Data saved to products successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Products saved successfully
+
+      at save (evalmachine.<anonymous>:271:21)
+
+  console.log
+    Data saved to locations successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Locations saved successfully
+
+      at save (evalmachine.<anonymous>:280:21)
+
+  console.log
+    Data saved to inventory successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Inventory saved successfully
+
+      at save (evalmachine.<anonymous>:289:21)
+
+  console.log
+    Data saved to transactions successfully
+
+      at window.saveToIndexedDB (evalmachine.<anonymous>:73:15)
+
+  console.log
+    Transactions saved successfully
+
+      at save (evalmachine.<anonymous>:298:21)
+
+  console.log
+    All data saved successfully
+
+      at save (evalmachine.<anonymous>:305:17)
+
+FAIL __tests__/addItem.test.js
+  addItem function
+    Code parsing mode
+      ✕ should parse single code and create product (94 ms)
+      ✕ should parse multiple codes and create multiple products (53 ms)
+      ✕ should handle various code formats (25 ms)
+      ✕ should update existing product if name matches (21 ms)
+      ✕ should update existing inventory entry (20 ms)
+      ✕ should handle invalid price (NaN) (21 ms)
+    Standard format mode (YY-MM prefix)
+      ✕ should create product with YY-MM format (18 ms)
+      ✓ should reject name without YY-MM prefix (7 ms)
+      ✓ should handle invalid inputs (6 ms)
+      ✕ should handle negative values (7 ms)
+    Edge cases
+      ✕ should use locationFilter when set (20 ms)
+      ✓ should handle empty or whitespace-only name (11 ms)
+      ✕ should trim whitespace from name (18 ms)
+
+  ● addItem function › Code parsing mode › should parse single code and create product
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 1
+    Received length: 0
+    Received array:  []
+
+      180 |
+      181 |             // Verify product was created
+    > 182 |             expect(vmProducts).toHaveLength(1);
+          |                                ^
+      183 |             expect(vmProducts[0]).toMatchObject({
+      184 |                 name: '23-11 Test Item',
+      185 |                 price: 15.50,
+
+      at Object.toHaveLength (__tests__/addItem.test.js:182:32)
+
+  ● addItem function › Code parsing mode › should parse multiple codes and create multiple products
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 2
+    Received length: 0
+    Received array:  []
+
+      222 |
+      223 |             // Should create 2 products
+    > 224 |             expect(ctx.products).toHaveLength(2);
+          |                                  ^
+      225 |             expect(ctx.products[0].name).toBe('23-11 Test Item');
+      226 |             expect(ctx.products[1].name).toBe('24-12 Test Item');
+      227 |
+
+      at Object.toHaveLength (__tests__/addItem.test.js:224:34)
+
+  ● addItem function › Code parsing mode › should handle various code formats
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 1
+    Received length: 0
+    Received array:  []
+
+      251 |                 await ctx.addItem();
+      252 |
+    > 253 |                 expect(ctx.products).toHaveLength(1);
+          |                                      ^
+      254 |                 expect(ctx.inventoryItems).toHaveLength(1);
+      255 |             }
+      256 |         });
+
+      at Object.toHaveLength (__tests__/addItem.test.js:253:38)
+
+  ● addItem function › Code parsing mode › should update existing product if name matches
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 1
+    Received length: 0
+    Received array:  []
+
+      280 |
+      281 |             // Should create inventory entry
+    > 282 |             expect(ctx.inventoryItems).toHaveLength(1);
+          |                                        ^
+      283 |             expect(ctx.inventoryItems[0].productId).toBe('existing123');
+      284 |         });
+      285 |
+
+      at Object.toHaveLength (__tests__/addItem.test.js:282:40)
+
+  ● addItem function › Code parsing mode › should update existing inventory entry
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 9
+    Received: 5
+
+      312 |             expect(ctx.inventoryItems).toHaveLength(1);
+      313 |             expect(ctx.inventoryItems[0]).toBe(existingInventory);
+    > 314 |             expect(ctx.inventoryItems[0].quantity).toBe(9); // 5 + 4 (from code)
+          |                                                    ^
+      315 |
+      316 |             // Verify update history was logged
+      317 |             expect(ctx.addToHistory).toHaveBeenCalledWith({
+
+      at Object.toBe (__tests__/addItem.test.js:314:52)
+
+  ● addItem function › Code parsing mode › should handle invalid price (NaN)
+
+    TypeError: Cannot read properties of undefined (reading 'price')
+
+      338 |
+      339 |             // Should set price to 0
+    > 340 |             expect(ctx.products[0].price).toBe(0);
+          |                                    ^
+      341 |         });
+      342 |     });
+      343 |
+
+      at Object.price (__tests__/addItem.test.js:340:36)
+
+  ● addItem function › Standard format mode (YY-MM prefix) › should create product with YY-MM format
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 1
+    Received length: 0
+    Received array:  []
+
+      354 |             await ctx.addItem();
+      355 |
+    > 356 |             expect(ctx.products).toHaveLength(1);
+          |                                  ^
+      357 |             expect(ctx.products[0].name).toBe('25-01 Test Product');
+      358 |             expect(ctx.products[0].price).toBe(25.99);
+      359 |
+
+      at Object.toHaveLength (__tests__/addItem.test.js:356:34)
+
+  ● addItem function › Standard format mode (YY-MM prefix) › should handle negative values
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: "Name must start with YY-MM (e.g., 25-10 or 24-01)"
+    Received: "Please fill all fields with valid values"
+
+    Number of calls: 1
+
+      403 |             await ctx.addItem();
+      404 |
+    > 405 |             expect(window.alert).toHaveBeenCalledWith('Name must start with YY-MM (e.g., 25-10 or 24-01)');
+          |                                  ^
+      406 |             expect(ctx.products).toHaveLength(0);
+      407 |         });
+      408 |     });
+
+      at Object.toHaveBeenCalledWith (__tests__/addItem.test.js:405:34)
+
+  ● addItem function › Edge cases › should use locationFilter when set
+
+    TypeError: Cannot read properties of undefined (reading 'locationId')
+
+      421 |             await ctx.addItem();
+      422 |
+    > 423 |             expect(ctx.inventoryItems[0].locationId).toBe('filteredLocation');
+          |                                          ^
+      424 |         });
+      425 |
+      426 |         test('should handle empty or whitespace-only name', async () => {
+
+      at Object.locationId (__tests__/addItem.test.js:423:42)
+
+  ● addItem function › Edge cases › should trim whitespace from name
+
+    TypeError: Cannot read properties of undefined (reading 'name')
+
+      449 |             await ctx.addItem();
+      450 |
+    > 451 |             expect(ctx.products[0].name).toBe('25-01 Test Product');
+          |                                    ^
+      452 |         });
+      453 |     });
+      454 | });
+
+      at Object.name (__tests__/addItem.test.js:451:36)
+
+  console.log
+    {
+      invoiceNumber: 'INV-1',
+      invoiceDate: '01012025',
+      products: [
+        { nume: 'Widget', pretUnitar: '10.50', bucati: '2' },
+        { nume: 'Gadget', pretUnitar: '5', bucati: '1' }
+      ]
+    }
+
+      at evalmachine.<anonymous>:41:17
+          at Array.forEach (<anonymous>)
+
+  console.error
+    Error processing invoice: ReferenceError: t is not defined
+        at Object.confirmInvoice (evalmachine.<anonymous>:168:9)
+        at Object.<anonymous> (/home/user/inventar/__tests__/invoice.test.js:60:5)
+
+      at Object.confirmInvoice (evalmachine.<anonymous>:170:17)
+      at Object.<anonymous> (__tests__/invoice.test.js:60:5)
+
+FAIL __tests__/invoice.test.js
+  js/invoice.js
+    ✕ checkPendingInvoices renders and shows pending invoices (40 ms)
+    ✕ confirmInvoice creates products and inventory entries (5 ms)
+
+  ● js/invoice.js › checkPendingInvoices renders and shows pending invoices
+
+    ReferenceError: t is not defined
+
+      at evalmachine.<anonymous>:50:34
+          at Array.forEach (<anonymous>)
+      at Object.checkPendingInvoices (evalmachine.<anonymous>:37:21)
+      at Object.checkPendingInvoices (__tests__/invoice.test.js:52:9)
+
+  ● js/invoice.js › confirmInvoice creates products and inventory entries
+
+    ReferenceError: t is not defined
+
+      at Object.confirmInvoice (evalmachine.<anonymous>:171:9)
+      at Object.<anonymous> (__tests__/invoice.test.js:60:5)
+
+PASS __tests__/localization.test.js
+  js/localization.js
+    ✓ updateTranslations sets static texts in English by default (20 ms)
+    ✓ changeLanguage switches to Romanian (8 ms)
+
+PASS __tests__/barcode.test.js
+  js/barcode.js
+    ✓ lookupProductByBarcode highlights and logs when found (10 ms)
+    ✓ saveBarcode assigns barcode and persists (6 ms)
+
+Test Suites: 2 failed, 2 passed, 4 total
+Tests:       12 failed, 7 passed, 19 total
+Snapshots:   0 total
+Time:        1.692 s
+Ran all test suites.
